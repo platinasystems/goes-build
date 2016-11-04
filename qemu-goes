@@ -1,0 +1,95 @@
+#!/bin/sh
+
+# Copyright 2015-2016 Platina Systems, Inc. All rights reserved.
+# Use of this source code is governed by a BSD-style license described in
+# /usr/share/doc/qemu-goes/copyright
+
+pid=$$
+usage="qemu-goes [-n | --dry-run] [-q | --quiet] [KERNEL [INITRD [DTB]]]"
+
+if test "$1" = "-h" -o "$1" = "-help" -o "$1" = "--help"; then
+	echo $usage
+	exit 0
+fi
+if test "$1" = "-n" -o "$1" = "-dry-run" -o "$1" = "--dry-run"; then
+	dryrun=echo
+	shift
+fi
+if test "$1" = "-q" -o "$1" = "-quiet" -o "$1" = "--quiet"; then
+	quiet=quiet
+	shift
+fi
+
+for f in $@; do
+	if test \! -r $f; then
+		echo can\'t read $f >/dev/stderr
+		exit 2
+	fi
+done
+
+if [ -n "$ROOT" -a -n "$DISK" ]; then
+    echo "Specify either ROOT or DISK, but not both"
+    exit 1
+fi
+
+if [ -z "$BIOS" ]; then
+    kernel=${1:-example-amd64.vmlinuz}
+    initrd=${2:-${kernel%.*}.cpio.xz}
+    dtb=$3
+    arch=$(file ${kernel})
+else
+    bios=${BIOS}
+    arch=x86
+fi
+
+case "$arch" in
+	*ARM*)
+		qemu=qemu-system-arm
+		console=ttyAMA0,115200
+		M=vexpress-a9
+		device=virtio-net-device,netdev=${USER}-${pid}
+		if test "$dtb" = ""; then
+			dtb=${kernel%.*}.dtb
+			if test \! -r $dtb; then
+				echo can\'t read $dtb >/dev/stderr
+				exit 2
+			fi
+		fi
+		;;
+	*x86*)
+		qemu=qemu-system-x86_64
+		console=ttyS0
+		device=virtio-net,netdev=${USER}-${pid}
+		kvm=kvm
+		;;
+	*)	echo $kernel unsupported >/dev/stderr
+		exit 2
+		;;
+esac
+
+netdev=user,id=${USER}-${pid},\
+hostfwd=tcp:127.0.0.1:6379-:6379,\
+hostfwd=tcp:127.0.0.1:2345-:2345,\
+hostfwd=udp:127.0.0.1:2623-:623,\
+hostfwd=tcp:127.0.0.1:2023-:23 
+append="console=${console}"
+append="${append}${quiet:+ quiet}"
+append="${append}${IP:+ ip=}${IP}"
+append="${append}${GOES:+ goes=}${GOES}"
+append="${append}${GOESRC:+ goesrc=}${GOESRC}"
+append="${append}${ROOT:+ root=/dev/vda}"
+
+quote=${dryrun:+\\\"}
+
+eval ${dryrun} ${qemu} ${M:+-M ${M}} ${kvm:+--enable-kvm} \
+	${bios:+-bios }${bios} \
+	${kernel:+-kernel }${kernel} \
+	${initrd:+-initrd }${initrd} \
+	${dtb:+-dtb }${dtb} \
+	-no-reboot \
+	-nographic \
+	${ROOT:+-drive file=${ROOT},if=virtio,index=0,media=disk} \
+	${DISK:+-drive file=${DISK},if=virtio,index=0,media=disk,format=raw} \
+	${netdev:+-netdev ${quote}\"${netdev}\"${quote}} \
+	${device:+-device ${quote}\"${device}\"${quote}} \
+	${kernel:+${append:+-append ${quote}\"${append}\"${quote}}}
