@@ -81,7 +81,7 @@ append="${append}${ROOT:+ root=/dev/vda}"
 
 quote=${dryrun:+\\\"}
 
-eval ${dryrun} ${qemu} ${M:+-M ${M}} ${kvm:+--enable-kvm} \
+eval ${dryrun} ${qemu} ${M:+-M ${M}} -m 1G ${kvm:+--enable-kvm} \
 	${bios:+-bios }${bios} \
 	${kernel:+-kernel }${kernel} \
 	${initrd:+-initrd }${initrd} \
