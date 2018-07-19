@@ -78,7 +78,7 @@ append="${append}${IP:+ ip=}${IP}"
 append="${append}${GOES:+ goes=}${GOES}"
 append="${append}${GOESRC:+ goesrc=}${GOESRC}"
 append="${append}${ROOT:+ root=/dev/vda}"
-
+append="${append} loglevel=7 dyndbg=\"file\ init/initramfs.c:484\ +p\""
 quote=${dryrun:+\\\"}
 
 eval ${dryrun} ${qemu} ${M:+-M ${M}} -m 1G ${kvm:+--enable-kvm} \
@@ -88,8 +88,8 @@ eval ${dryrun} ${qemu} ${M:+-M ${M}} -m 1G ${kvm:+--enable-kvm} \
 	${dtb:+-dtb }${dtb} \
 	-no-reboot \
 	-nographic \
-	${ROOT:+-drive file=${ROOT},if=virtio,index=0,media=disk} \
-	${DISK:+-drive file=${DISK},if=virtio,index=0,media=disk,format=raw} \
+	${ROOT:+-drive file=${ROOT},if=ide,index=0,media=disk} \
+	${DISK:+-drive file=${DISK},if=ide,index=0,media=disk,format=raw} \
 	${netdev:+-netdev ${quote}\"${netdev}\"${quote}} \
 	${device:+-device ${quote}\"${device}\"${quote}} \
 	${kernel:+${append:+-append ${quote}\"${append}\"${quote}}}
