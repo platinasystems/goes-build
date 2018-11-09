@@ -112,6 +112,7 @@ var (
 	nFlag = flag.Bool("n", false,
 		"print 'go build' commands but do not run them.")
 	oFlag    = flag.String("o", "", "output file name of PACKAGE build")
+	rFlag    = flag.Bool("r", false, "rebase worktrees before build")
 	tagsFlag = flag.String("tags", "", `
 debug	disable optimizer and increase vnet log
 diag	include manufacturing diagnostics with BMC
@@ -752,7 +753,8 @@ func configWorktree(repo string, machine string, config string) (workdir string,
 		return "", fmt.Errorf("can't find gitdir for %s", repo)
 	}
 	workdir = filepath.Join("worktrees", repo, machine)
-	if _, err := os.Stat(workdir); os.IsNotExist(err) {
+	_, err = os.Stat(workdir)
+	if os.IsNotExist(err) {
 		clone := ""
 		if *cloneFlag {
 			clone = " || git clone . $p"
@@ -769,6 +771,16 @@ func configWorktree(repo string, machine string, config string) (workdir string,
 			" && cd $p" +
 			" && " + config); err != nil {
 			return "", err
+		}
+	}
+	if err == nil {
+		if *rFlag {
+			if err := shellCommandRun("cd " + workdir +
+				" && git fetch origin " +
+				" && git rebase origin" +
+				" && " + config); err != nil {
+				return "", err
+			}
 		}
 	}
 	return
