@@ -1,0 +1,13 @@
+*.orig
+*.rej
+*.so
+*.swp
+*.test
+*.zip
+*~
+*#*#
+/goes-*
+/*.patch
+*.rom
+*.vmlinuz
+worktrees
