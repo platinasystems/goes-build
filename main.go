@@ -33,7 +33,7 @@ const (
 	platinaGoMainIP                   = platinaGoMain + "/ip"
 	platinaGoMainGoesPrefix           = platinaGoMain + "goes-"
 	platinaGoMainGoesExample          = platinaGoMain + "/goes-example"
-	platinaGoMainGoesBoot             = platinaGoMain + "/goes-boot"
+	platinaGoMainGoesBoot             = platina + "/goes-boot"
 	platinaGoMainGoesInstaller        = platinaGoMain + "/goes-installer"
 	platinaGoMainGoesPlatinaMk1       = platinaGoMain + "/goes-platina-mk1"
 	platinaGoMainGoesPlatinaMk1Bmc    = platinaGoMainGoesPlatinaMk1 + "-bmc"
@@ -191,6 +191,10 @@ diag	include manufacturing diagnostics with BMC
 		goesPlatinaMk2Mc1Bmc:    makeArmLinuxStatic,
 		platinaMk2Mc1BmcVmlinuz: makeArmLinuxKernel,
 	}
+	pkgdir = map[string]string{
+		goesBoot:    "../goes-boot",
+		goesBootArm: "../goes-boot",
+	}
 )
 
 func init() {
@@ -238,7 +242,7 @@ func usage() {
 }
 
 func makeArmLinuxStatic(out, name string) error {
-	return armLinux.godo("build", "-o", out, "-tags", "netgo",
+	return armLinux.godoforpkg(out, "build", "-o", out, "-tags", "netgo",
 		"-ldflags", "-d", name)
 }
 
@@ -263,15 +267,15 @@ func makeAmd64Boot(out, name string) (err error) {
 }
 
 func makeAmd64Linux(out, name string) error {
-	return amd64Linux.godo("build", "-o", out, name)
+	return amd64Linux.godoforpkg(out, "build", "-o", out, name)
 }
 
 func makeAmd64LinuxStatic(out, name string) error {
-	return amd64Linux.godo("build", "-o", out, "-tags", "netgo", name)
+	return amd64Linux.godoforpkg(out, "build", "-o", out, "-tags", "netgo", name)
 }
 
 func makeAmd64LinuxTest(out, name string) error {
-	return amd64Linux.godo("test", "-c", "-o", out, name)
+	return amd64Linux.godoforpkg(out, "test", "-c", "-o", out, name)
 }
 
 func makeAmd64CorebootRom(romfile, machine string) (err error) {
@@ -307,11 +311,11 @@ func makeAmd64LinuxInitramfs(out, name string) (err error) {
 }
 
 func makeHost(out, name string) error {
-	return host.godo("build", "-o", out, name)
+	return host.godoforpkg(out, "build", "-o", out, name)
 }
 
 func makeHostTest(out, name string) error {
-	return host.godo("test", "-c", "-o", out, name)
+	return host.godoforpkg(out, "test", "-c", "-o", out, name)
 }
 
 func makePackage(name string) error {
@@ -338,7 +342,7 @@ func makeGoesPlatinaMk1Installer(out, name string) error {
 	if err != nil {
 		return err
 	}
-	err = amd64Linux.godo("build", "-o", tinstaller,
+	err = amd64Linux.godoforpkg(out, "build", "-o", tinstaller,
 		platinaGoMainGoesInstaller)
 	if err != nil {
 		return err
@@ -438,7 +442,7 @@ func (goenv *goenv) makeCpioArchive(name string) (err error) {
 		}
 	}
 
-	goesbin, err := goenv.stripBinary("../go/" + name)
+	goesbin, err := goenv.stripBinary("../goes-boot/" + name)
 	if err != nil {
 		return
 	}
@@ -548,6 +552,14 @@ func (goenv *goenv) godoindir(dir string, args ...string) error {
 
 func (goenv *goenv) godo(args ...string) error {
 	return goenv.godoindir("../go", args...)
+}
+
+func (goenv *goenv) godoforpkg(pkg string, args ...string) error {
+	dir := pkgdir[pkg]
+	if dir == "" {
+		dir = "../go" // legacy packages
+	}
+	return goenv.godoindir(dir, args...)
 }
 
 func (goenv *goenv) log(args ...string) {
