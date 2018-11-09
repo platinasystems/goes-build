@@ -12,6 +12,13 @@ pipeline {
 	stage('Checkout') {
 	    steps {
 		echo "Running build #${env.BUILD_ID} on ${env.JENKINS_URL}"
+		dir('goes-build') {
+		    git([
+			url: 'git@github.com:platinasystems/goes-build.git',
+			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
+			branch: 'master'
+			])
+		}
 		dir('go') {
 		    git([
 			url: 'git@github.com:platinasystems/go.git',
@@ -51,7 +58,7 @@ pipeline {
 	}
 	stage('Build') {
 	    steps {
-		dir('go') {
+		dir('goes-build') {
 		    sshagent(credentials: ['570701f7-c819-4db2-bd31-a0da8a452b41']) {
 			echo "Updating worktrees"
 			sh 'set -x;env;pwd;[ -d worktrees ] && for repo in worktrees/*/*; do echo $repo; [ -d "$repo" ] && (cd $repo;git fetch origin;git reset --hard HEAD;git rebase origin/master);done || true'
