@@ -47,19 +47,26 @@ pipeline {
 			branch: 'master'
 			])
 		}
-		dir('system-build') {
-		    checkout([$class: 'GitSCM',
-         	    		      branches: [[name: '*/master']],
-         	    		      doGenerateSubmoduleConfigurations: false,
-	 	    		      extensions: [[$class: 'SubmoduleOption',
-		    		      		  disableSubmodules: false,
-						  parentCredentials: true,
-						  recursiveSubmodules: true,
-						  reference: '',
-						  trackingSubmodules: true]],
-				      submoduleCfg: [],
-				      userRemoteConfigs: [[credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
-				      url: 'git@github.com:platinasystems/system-build.git']]])
+		dir('coreboot') {
+		    git([
+			url: 'git@github.com:platinasystems/coreboot.git',
+			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
+			branch: 'master'
+			])
+		}
+		dir('linux') {
+		    git([
+			url: 'git@github.com:platinasystems/linux.git',
+			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
+			branch: 'master'
+			])
+		}
+		dir('u-boot') {
+		    git([
+			url: 'git@github.com:platinasystems/u-boot.git',
+			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
+			branch: 'master'
+			])
 		}
 	    }
 	}
