@@ -216,6 +216,7 @@ func main() {
 			err = makePackage(target)
 		}
 		if err != nil {
+			fmt.Printf("Error making package %s\n", target)
 			panic(err)
 		}
 	}
@@ -437,7 +438,7 @@ func (goenv *goenv) makeCpioArchive(name string) (err error) {
 		}
 	}
 
-	goesbin, err := goenv.stripBinary(name)
+	goesbin, err := goenv.stripBinary("../go/" + name)
 	if err != nil {
 		return
 	}
@@ -546,7 +547,7 @@ func (goenv *goenv) godoindir(dir string, args ...string) error {
 }
 
 func (goenv *goenv) godo(args ...string) error {
-	return goenv.godoindir("", args...)
+	return goenv.godoindir("../go", args...)
 }
 
 func (goenv *goenv) log(args ...string) {
