@@ -772,6 +772,7 @@ func configWorktree(repo string, machine string, config string) (workdir string,
 			" && " + config); err != nil {
 			return "", err
 		}
+		return
 	}
 	if err == nil {
 		if *rFlag {
