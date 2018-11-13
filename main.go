@@ -35,7 +35,7 @@ const (
 	platinaGoMainGoesExample          = platinaGoMain + "/goes-example"
 	platinaGoMainGoesBoot             = platina + "/goes-boot"
 	platinaGoMainGoesInstaller        = platinaGoMain + "/goes-installer"
-	platinaGoMainGoesPlatinaMk1       = platinaGoMain + "/goes-platina-mk1"
+	platinaGoMainGoesPlatinaMk1       = platina + "/goes-platina-mk1"
 	platinaGoMainGoesPlatinaMk1Bmc    = platinaGoMainGoesPlatinaMk1 + "-bmc"
 	platinaGoMainGoesPlatinaMk2       = platinaGoMain + "/goes-platina-mk2"
 	platinaGoMainGoesPlatinaMk2Lc1Bmc = platinaGoMainGoesPlatinaMk2 + "-lc1-bmc"
@@ -92,7 +92,7 @@ var (
 		goesBoot,
 		goesBootArm,
 		goesIP,
-		//goesPlatinaMk1,
+		goesPlatinaMk1,
 		platinaMk1Vmlinuz,
 		corebootPlatinaMk1,
 		goesPlatinaMk1Bmc,
@@ -193,8 +193,9 @@ diag	include manufacturing diagnostics with BMC
 		platinaMk2Mc1BmcVmlinuz: makeArmLinuxKernel,
 	}
 	pkgdir = map[string]string{
-		goesBoot:    "../goes-boot",
-		goesBootArm: "../goes-boot",
+		goesBoot:       "../goes-boot",
+		goesBootArm:    "../goes-boot",
+		goesPlatinaMk1: "../goes-platina-mk1",
 	}
 )
 
@@ -332,7 +333,7 @@ func makeGoesPlatinaMk1(out, name string) error {
 	if strings.Index(*tagsFlag, "debug") >= 0 {
 		args = append(args, "-gcflags", "-N -l")
 	}
-	return amd64Linux.godo(append(append([]string{"build", "-o", out}, args...), name)...)
+	return amd64Linux.godoforpkg(out, append(append([]string{"build", "-o", out}, args...), name)...)
 }
 
 func makeGoesPlatinaMk1Installer(out, name string) error {
