@@ -36,7 +36,7 @@ const (
 	platinaGoMainGoesBoot             = platina + "/goes-boot"
 	platinaGoMainGoesInstaller        = platinaGoMain + "/goes-installer"
 	platinaGoMainGoesPlatinaMk1       = platina + "/goes-platina-mk1"
-	platinaGoMainGoesPlatinaMk1Bmc    = platinaGoMainGoesPlatinaMk1 + "-bmc"
+	platinaGoMainGoesPlatinaMk1Bmc    = platinaGoMain + "/goes-platina-mk1-bmc"
 	platinaGoMainGoesPlatinaMk2       = platinaGoMain + "/goes-platina-mk2"
 	platinaGoMainGoesPlatinaMk2Lc1Bmc = platinaGoMainGoesPlatinaMk2 + "-lc1-bmc"
 	platinaGoMainGoesPlatinaMk2Mc1Bmc = platinaGoMainGoesPlatinaMk2 + "-mc1-bmc"
