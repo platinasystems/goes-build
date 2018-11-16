@@ -81,6 +81,8 @@ type goenv struct {
 	kernelConfigPath string
 	kernelArch       string
 	boot             string
+	cpioSuffix       string
+	cpioTrimPrefix   string
 }
 
 var (
@@ -134,6 +136,7 @@ diag	include manufacturing diagnostics with BMC
 		kernelConfigPath: "arch/x86/configs",
 		kernelArch:       "x86_64",
 		boot:             "coreboot",
+		cpioSuffix:       ".cpio.xz",
 	}
 	armLinux = goenv{
 		goarch:           "arm",
@@ -143,6 +146,8 @@ diag	include manufacturing diagnostics with BMC
 		kernelConfigPath: "arch/arm/configs",
 		kernelArch:       "arm",
 		boot:             "u-boot",
+		cpioSuffix:       ".cpio.xz",
+		cpioTrimPrefix:   "goes-",
 	}
 	mainPkg = map[string]string{
 		goesExample:             platinaGoMainGoesExample,
@@ -162,13 +167,13 @@ diag	include manufacturing diagnostics with BMC
 		goesPlatinaMk1Installer: platinaGoMainGoesPlatinaMk1,
 		goesPlatinaMk1Bmc:       platinaGoMainGoesPlatinaMk1Bmc,
 		platinaMk1BmcVmlinuz:    "platina-mk1-bmc_defconfig",
-		ubootPlatinaMk1Bmc:      "platinamx6boards_sd_defconfig",
+		ubootPlatinaMk1Bmc:      "platinamx6boards_qspi_defconfig",
 		goesPlatinaMk2Lc1Bmc:    platinaGoMainGoesPlatinaMk2Lc1Bmc,
 		platinaMk2Lc1BmcVmlinuz: "platina-mk2-lc1-bmc_defconfig",
 		goesPlatinaMk2Mc1Bmc:    platinaGoMainGoesPlatinaMk2Mc1Bmc,
 		platinaMk2Mc1BmcVmlinuz: "platina-mk2-mc1-bmc_defconfig",
 	}
-	make = map[string]func(out, name string) error{
+	makeFun = map[string]func(out, name string) error{
 		goesExample:             makeHost,
 		exampleAmd64Vmlinuz:     makeAmd64LinuxKernel,
 		corebootExampleAmd64:    makeAmd64Boot,
@@ -184,7 +189,7 @@ diag	include manufacturing diagnostics with BMC
 		corebootPlatinaMk1Rom:   makeAmd64CorebootRom,
 		goesPlatinaMk1Installer: makeGoesPlatinaMk1Installer,
 		goesPlatinaMk1Test:      makeAmd64LinuxTest,
-		goesPlatinaMk1Bmc:       makeArmLinuxStatic,
+		goesPlatinaMk1Bmc:       makeArmLinuxInitramfs,
 		platinaMk1BmcVmlinuz:    makeArmLinuxKernel,
 		ubootPlatinaMk1Bmc:      makeArmBoot,
 		goesPlatinaMk2Lc1Bmc:    makeArmLinuxStatic,
@@ -211,13 +216,13 @@ func main() {
 		targets = defaultTargets
 	} else if targets[0] == "all" {
 		targets = targets[:0]
-		for target := range make {
+		for target := range makeFun {
 			targets = append(targets, target)
 		}
 	}
 	for _, target := range targets {
 		var err error
-		if f, found := make[target]; found {
+		if f, found := makeFun[target]; found {
 			err = f(target, mainPkg[target])
 		} else {
 			err = makePackage(target)
@@ -239,7 +244,7 @@ func usage() {
 		fmt.Fprint(os.Stderr, "\t", target, "\n")
 	}
 	fmt.Fprintln(os.Stderr, "\n\"all\" Targets:")
-	for target := range make {
+	for target := range makeFun {
 		fmt.Fprint(os.Stderr, "\t", target, "\n")
 	}
 }
@@ -250,7 +255,85 @@ func makeArmLinuxStatic(out, name string) error {
 }
 
 func makeArmBoot(out, name string) (err error) {
-	return armLinux.makeboot(out, "make "+name)
+	if err = armLinux.makeboot(out, "make "+name); err != nil {
+		return err
+	}
+	machine := strings.TrimPrefix(out, "u-boot-")
+	env := makeUbootEnv()
+	if err = ioutil.WriteFile(machine+"-env.bin", env, 0644); err != nil {
+		return err
+	}
+	cmdline := "cp worktrees/linux/" + machine + "/arch/arm/boot/dts/" +
+		machine + ".dtb ."
+	if err := shellCommandRun(cmdline); err != nil {
+		return err
+	}
+
+	uboot := makeUboot("worktrees/u-boot/" + machine + "/u-boot.imx")
+	if err = ioutil.WriteFile(machine+"-ubo.bin", uboot, 0644); err != nil {
+		return err
+	}
+
+	cmdline = "mkimage -C none -A arm -O linux -T ramdisk -d " +
+		machine + ".cpio.xz " + machine + "-ini.bin"
+	if err := shellCommandRun(cmdline); err != nil {
+		return err
+	}
+
+	makeVer("rel") // FIXME
+
+	zipFile, err := os.Create(machine + ".zip")
+	if err != nil {
+		return err
+	}
+	defer zipFile.Close()
+	zipWriter := zip.NewWriter(zipFile)
+	defer zipWriter.Close()
+
+	for _, suffix := range []string{
+		"-env.bin",
+		"-ini.bin",
+		"-ubo.bin",
+		"-ver.bin",
+		".dtb",
+	} {
+		file, err := os.Open(machine + suffix)
+		if err != nil {
+			fmt.Printf("Error opening %s: %s\n", machine+suffix,
+				err)
+			os.Remove(machine + ".zip")
+			panic(err)
+		}
+		defer file.Close()
+
+		// Get the file information
+		info, err := file.Stat()
+		if err != nil {
+			os.Remove(machine + ".zip")
+			panic(err)
+		}
+
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			os.Remove(machine + ".zip")
+			panic(err)
+		}
+
+		// Change to deflate to gain better compression
+		// see http://golang.org/pkg/archive/zip/#pkg-constants
+		header.Method = zip.Deflate
+
+		writer, err := zipWriter.CreateHeader(header)
+		if err != nil {
+			os.Remove(machine + ".zip")
+			panic(err)
+		}
+		if _, err = io.Copy(writer, file); err != nil {
+			os.Remove(machine + ".zip")
+			panic(err)
+		}
+	}
+	return nil
 }
 
 func makeArmLinuxKernel(out, name string) (err error) {
@@ -378,16 +461,18 @@ func (goenv *goenv) makeCpioArchive(name string) (err error) {
 	if *nFlag {
 		return nil
 	}
-	f, err := os.Create(name + ".cpio.xz.tmp")
+	arname := strings.TrimPrefix(name+goenv.cpioSuffix,
+		goenv.cpioTrimPrefix)
+	f, err := os.Create(arname + ".tmp")
 	if err != nil {
 		return
 	}
 	defer func() {
 		f.Close()
 		if err == nil {
-			mv(name+".cpio.xz.tmp", name+".cpio.xz")
+			mv(arname+".tmp", arname)
 		} else {
-			rm(name + ".cpio.xz.tmp")
+			rm(arname + ".tmp")
 		}
 	}()
 	rp, wp := io.Pipe()
@@ -445,7 +530,7 @@ func (goenv *goenv) makeCpioArchive(name string) (err error) {
 		}
 	}
 
-	goesbin, err := goenv.stripBinary("../goes-boot/" + name)
+	goesbin, err := goenv.stripBinary(pkgdir[name] + "/" + name)
 	if err != nil {
 		return
 	}

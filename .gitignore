@@ -6,8 +6,11 @@
 *.zip
 *~
 *#*#
-/goes-*
+/goes-build
 /*.patch
 *.rom
 *.vmlinuz
-worktrees
+/worktrees
+/platina-*.bin
+/platina-*.dtb
+
