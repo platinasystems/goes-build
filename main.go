@@ -250,7 +250,17 @@ func makeArmLinuxStatic(out, name string) error {
 }
 
 func makeArmBoot(out, name string) (err error) {
-	return armLinux.makeboot(out, "make "+name)
+	if err = armLinux.makeboot(out, "make "+name); err != nil {
+		return err
+	}
+	machine := strings.TrimPrefix(out, "u-boot-")
+	cmdline := "cp worktrees/u-boot/" + machine + "/u-boot.imx ."
+	if err := shellCommandRun(cmdline); err != nil {
+		return err
+	}
+	// make environment variables
+	// acquire dtb
+	return nil
 }
 
 func makeArmLinuxKernel(out, name string) (err error) {
