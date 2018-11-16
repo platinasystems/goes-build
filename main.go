@@ -162,7 +162,7 @@ diag	include manufacturing diagnostics with BMC
 		goesPlatinaMk1Installer: platinaGoMainGoesPlatinaMk1,
 		goesPlatinaMk1Bmc:       platinaGoMainGoesPlatinaMk1Bmc,
 		platinaMk1BmcVmlinuz:    "platina-mk1-bmc_defconfig",
-		ubootPlatinaMk1Bmc:      "platinamx6boards_sd_defconfig",
+		ubootPlatinaMk1Bmc:      "platinamx6boards_qspi_defconfig",
 		goesPlatinaMk2Lc1Bmc:    platinaGoMainGoesPlatinaMk2Lc1Bmc,
 		platinaMk2Lc1BmcVmlinuz: "platina-mk2-lc1-bmc_defconfig",
 		goesPlatinaMk2Mc1Bmc:    platinaGoMainGoesPlatinaMk2Mc1Bmc,
