@@ -26,23 +26,16 @@ pipeline {
 			branch: 'master'
 			])
 		}
+		dir('goes-platina-mk1') {
+		    git([
+			url: 'git@github.com:platinasystems/goes-platina-mk1.git',
+			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
+			branch: 'master'
+			])
+		}
 		dir('go') {
 		    git([
 			url: 'git@github.com:platinasystems/go.git',
-			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
-			branch: 'master'
-			])
-		}
-		dir('fe1') {
-		    git([
-			url: 'git@github.com:platinasystems/fe1.git',
-			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
-			branch: 'master'
-			])
-		}
-		dir('firmware-fe1a') {
-		    git([
-			url: 'git@github.com:platinasystems/firmware-fe1a.git',
 			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
 			branch: 'master'
 			])
