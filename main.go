@@ -168,7 +168,7 @@ diag	include manufacturing diagnostics with BMC
 		goesPlatinaMk2Mc1Bmc:    platinaGoMainGoesPlatinaMk2Mc1Bmc,
 		platinaMk2Mc1BmcVmlinuz: "platina-mk2-mc1-bmc_defconfig",
 	}
-	make = map[string]func(out, name string) error{
+	makeFun = map[string]func(out, name string) error{
 		goesExample:             makeHost,
 		exampleAmd64Vmlinuz:     makeAmd64LinuxKernel,
 		corebootExampleAmd64:    makeAmd64Boot,
@@ -211,13 +211,13 @@ func main() {
 		targets = defaultTargets
 	} else if targets[0] == "all" {
 		targets = targets[:0]
-		for target := range make {
+		for target := range makeFun {
 			targets = append(targets, target)
 		}
 	}
 	for _, target := range targets {
 		var err error
-		if f, found := make[target]; found {
+		if f, found := makeFun[target]; found {
 			err = f(target, mainPkg[target])
 		} else {
 			err = makePackage(target)
@@ -239,7 +239,7 @@ func usage() {
 		fmt.Fprint(os.Stderr, "\t", target, "\n")
 	}
 	fmt.Fprintln(os.Stderr, "\n\"all\" Targets:")
-	for target := range make {
+	for target := range makeFun {
 		fmt.Fprint(os.Stderr, "\t", target, "\n")
 	}
 }
@@ -258,7 +258,10 @@ func makeArmBoot(out, name string) (err error) {
 	if err := shellCommandRun(cmdline); err != nil {
 		return err
 	}
-	// make environment variables
+	env := makeUbootEnv()
+	if err = ioutil.WriteFile(machine+"-env.bin", env, 0644); err != nil {
+		return err
+	}
 	// acquire dtb
 	return nil
 }
