@@ -36,7 +36,7 @@ const (
 	platinaGoMainGoesBoot             = platina + "/goes-boot"
 	platinaGoMainGoesInstaller        = platinaGoMain + "/goes-installer"
 	platinaGoMainGoesPlatinaMk1       = platina + "/goes-platina-mk1"
-	platinaGoMainGoesPlatinaMk1Bmc    = platinaGoMain + "/goes-platina-mk1-bmc"
+	platinaGoMainGoesPlatinaMk1Bmc    = platina + "/goes-bmc"
 	platinaGoMainGoesPlatinaMk2       = platinaGoMain + "/goes-platina-mk2"
 	platinaGoMainGoesPlatinaMk2Lc1Bmc = platinaGoMainGoesPlatinaMk2 + "-lc1-bmc"
 	platinaGoMainGoesPlatinaMk2Mc1Bmc = platinaGoMainGoesPlatinaMk2 + "-mc1-bmc"
@@ -193,9 +193,10 @@ diag	include manufacturing diagnostics with BMC
 		platinaMk2Mc1BmcVmlinuz: makeArmLinuxKernel,
 	}
 	pkgdir = map[string]string{
-		goesBoot:       "../goes-boot",
-		goesBootArm:    "../goes-boot",
-		goesPlatinaMk1: "../goes-platina-mk1",
+		goesBoot:          "../goes-boot",
+		goesBootArm:       "../goes-boot",
+		goesPlatinaMk1:    "../goes-platina-mk1",
+		goesPlatinaMk1Bmc: "../goes-bmc",
 	}
 )
 
