@@ -262,7 +262,12 @@ func makeArmBoot(out, name string) (err error) {
 	if err = ioutil.WriteFile(machine+"-env.bin", env, 0644); err != nil {
 		return err
 	}
-	// acquire dtb
+	cmdline = "cp worktrees/linux/" + machine + "/arch/arm/boot/dts/" +
+		machine + ".dtb ."
+	if err := shellCommandRun(cmdline); err != nil {
+		return err
+	}
+
 	return nil
 }
 
