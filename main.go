@@ -530,6 +530,10 @@ func (goenv *goenv) makeCpioArchive(name string) (err error) {
 		}
 	}
 
+	if err = mkfileFromSliceCpio(w, "/etc/resolv.conf", 0644, name, []byte("nameserver 8.8.8.8\n")); err != nil {
+		return
+	}
+
 	goesbin, err := goenv.stripBinary(pkgdir[name] + "/" + name)
 	if err != nil {
 		return
