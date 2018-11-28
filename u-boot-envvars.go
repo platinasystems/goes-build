@@ -7,7 +7,7 @@ import (
 )
 
 const envvar = `baudrate=115200
-bootargs=console=ttymxc0,115200n8 mem=1024minit=/init start ip=dhcp
+bootargs=console=ttymxc0,115200n8 mem=1024m init=/init start ip=dhcp
 bootcmd=run readmac;sf probe 0;sf read ${fdt_addr} 0x00080000 ${sz_fdt};sf read ${loadaddr} 0x00100000 ${sz_kernel};sf read ${initrd_addr} 0x00300000 ${sz_initrd};bootz ${loadaddr} ${initrd_addr} ${fdt_addr}
 bootdelay=3
 dlbmc=mw.b 80800000 00 00600000;run dw_hdr;run dw_uboot;run dw_fdt;run dw_kernel;run dw_initrd
