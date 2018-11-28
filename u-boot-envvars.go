@@ -8,7 +8,7 @@ import (
 
 const envvar = `baudrate=115200
 bootargs=console=ttymxc0,115200n8 mem=1024minit=/init start ip=dhcp
-bootcmd=run readmac;sf probe 0;sf read ${fdt_addr} 0x00080000 ${sz_fdt};sf read ${loadaddr} 0x00100000 ${sz_kernel};sf read ${initrd_addr} 0x00300000 ${sz_initrd};bootz ${loadaddr} ${sz_initrd} ${fdt_addr}
+bootcmd=run readmac;sf probe 0;sf read ${fdt_addr} 0x00080000 ${sz_fdt};sf read ${loadaddr} 0x00100000 ${sz_kernel};sf read ${initrd_addr} 0x00300000 ${sz_initrd};bootz ${loadaddr} ${initrd_addr} ${fdt_addr}
 bootdelay=3
 dlbmc=mw.b 80800000 00 00600000;run dw_hdr;run dw_uboot;run dw_fdt;run dw_kernel;run dw_initrd
 dw_fdt=tftpboot 80880000 ${serverip}:platina-mk1-bmc.dtb;setenv sz_fdt ${filesize}
@@ -50,8 +50,8 @@ const ubootEnvsize = 8192
 
 func makeUbootEnv() []byte {
 	binenv := make([]byte, ubootEnvsize)
-	copy(binenv, strings.Replace(envvar, "\n", "\x00", -1))
-	crc := crc32.ChecksumIEEE(binenv[:ubootEnvsize-crc32.Size])
-	binary.LittleEndian.PutUint32(binenv[ubootEnvsize-crc32.Size:], crc)
+	copy(binenv[crc32.Size:], strings.Replace(envvar, "\n", "\x00", -1))
+	crc := crc32.ChecksumIEEE(binenv[crc32.Size:])
+	binary.LittleEndian.PutUint32(binenv[:crc32.Size], crc)
 	return binenv
 }
