@@ -70,6 +70,8 @@ const (
 	platinaMk2Mc1BmcVmlinuz = "platina-mk2-mc1-bmc.vmlinuz"
 
 	ubootPlatinaMk1Bmc = "u-boot-platina-mk1-bmc"
+
+	zipPlatinaMk1Bmc = "platina-mk1-bmc.zip"
 )
 
 type goenv struct {
@@ -104,7 +106,7 @@ var (
 		platinaMk2Mc1BmcVmlinuz,
 		corebootExampleAmd64Rom,
 		corebootPlatinaMk1Rom,
-		ubootPlatinaMk1Bmc,
+		zipPlatinaMk1Bmc,
 	}
 	goarchFlag = flag.String("goarch", runtime.GOARCH,
 		"GOARCH of PACKAGE build")
@@ -174,6 +176,20 @@ diag	include manufacturing diagnostics with BMC
 		goesPlatinaMk2Mc1Bmc:    platinaGoMainGoesPlatinaMk2Mc1Bmc,
 		platinaMk2Mc1BmcVmlinuz: "platina-mk2-mc1-bmc_defconfig",
 	}
+	makeFun map[string]func(out, name string) error
+	pkgdir  = map[string]string{
+		goesBoot:          "../goes-boot",
+		goesBootArm:       "../goes-boot",
+		goesPlatinaMk1:    "../goes-platina-mk1",
+		goesPlatinaMk1Bmc: "../goes-bmc",
+		goesExample:       "../goes-example",
+		goesExampleArm:    "../goes-example",
+	}
+	pkgbuilt = map[string]bool{}
+)
+
+func init() {
+	flag.Usage = usage
 	makeFun = map[string]func(out, name string) error{
 		goesExample:             makeHost,
 		exampleAmd64Vmlinuz:     makeAmd64LinuxKernel,
@@ -197,19 +213,35 @@ diag	include manufacturing diagnostics with BMC
 		platinaMk2Lc1BmcVmlinuz: makeArmLinuxKernel,
 		goesPlatinaMk2Mc1Bmc:    makeArmLinuxStatic,
 		platinaMk2Mc1BmcVmlinuz: makeArmLinuxKernel,
+		zipPlatinaMk1Bmc:        makeArmZipfile,
 	}
-	pkgdir = map[string]string{
-		goesBoot:          "../goes-boot",
-		goesBootArm:       "../goes-boot",
-		goesPlatinaMk1:    "../goes-platina-mk1",
-		goesPlatinaMk1Bmc: "../goes-bmc",
-		goesExample:       "../goes-example",
-		goesExampleArm:    "../goes-example",
-	}
-)
+}
 
-func init() {
-	flag.Usage = usage
+func makeDependent(target string) {
+	if pkgbuilt[target] {
+		fmt.Printf("# Dependent package %s already built\n", target)
+		return
+	}
+	fmt.Printf("# Making dependent package %s\n", target)
+	makeTarget(target)
+}
+
+func makeTarget(target string) {
+	var err error
+	if pkgbuilt[target] {
+		fmt.Printf("# Package %s already built\n", target)
+		return
+	}
+	if f, found := makeFun[target]; found {
+		err = f(target, mainPkg[target])
+	} else {
+		err = makePackage(target)
+	}
+	if err != nil {
+		fmt.Printf("Error making package %s\n", target)
+		panic(err)
+	}
+	pkgbuilt[target] = true
 }
 
 func main() {
@@ -224,16 +256,7 @@ func main() {
 		}
 	}
 	for _, target := range targets {
-		var err error
-		if f, found := makeFun[target]; found {
-			err = f(target, mainPkg[target])
-		} else {
-			err = makePackage(target)
-		}
-		if err != nil {
-			fmt.Printf("Error making package %s\n", target)
-			panic(err)
-		}
+		makeTarget(target)
 	}
 }
 
@@ -277,7 +300,16 @@ func makeArmBoot(out, name string) (err error) {
 		return err
 	}
 
-	cmdline = "mkimage -C none -A arm -O linux -T ramdisk -d " +
+	return nil
+}
+
+func makeArmZipfile(out, name string) (err error) {
+	machine := strings.TrimSuffix(out, ".zip")
+
+	makeDependent("u-boot-" + machine)
+
+	makeDependent(goesBootArm)
+	cmdline := "mkimage -C none -A arm -O linux -T ramdisk -d " +
 		machine + ".cpio.xz " + machine + "-ini.bin"
 	if err := shellCommandRun(cmdline); err != nil {
 		return err
@@ -335,6 +367,7 @@ func makeArmBoot(out, name string) (err error) {
 			os.Remove(machine + ".zip")
 			panic(err)
 		}
+		armLinux.log("added", machine+suffix, "to", machine+".zip")
 	}
 	return nil
 }
@@ -368,6 +401,9 @@ func makeAmd64LinuxTest(out, name string) error {
 }
 
 func makeAmd64CorebootRom(romfile, machine string) (err error) {
+	makeDependent("coreboot-" + machine)
+	makeDependent(machine + ".vmlinuz")
+	makeDependent(goesBoot)
 	dir := "worktrees/coreboot/" + machine
 	build := dir + "/build"
 	cbfstool := build + "/cbfstool"
