@@ -98,12 +98,12 @@ var (
 		platinaMk1Vmlinuz,
 		corebootPlatinaMk1,
 		goesPlatinaMk1Bmc,
-		ubootPlatinaMk1Bmc,
 		platinaMk1BmcVmlinuz,
 		platinaMk2Lc1BmcVmlinuz,
 		platinaMk2Mc1BmcVmlinuz,
 		corebootExampleAmd64Rom,
 		corebootPlatinaMk1Rom,
+		ubootPlatinaMk1Bmc,
 	}
 	goarchFlag = flag.String("goarch", runtime.GOARCH,
 		"GOARCH of PACKAGE build")
