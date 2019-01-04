@@ -32,7 +32,7 @@ const (
 
 	platinaGoMainIP                   = platinaGoMain + "/ip"
 	platinaGoMainGoesPrefix           = platinaGoMain + "goes-"
-	platinaGoMainGoesExample          = platinaGoMain + "/goes-example"
+	platinaGoMainGoesExample          = platina + "/goes-example"
 	platinaGoMainGoesBoot             = platina + "/goes-boot"
 	platinaGoMainGoesInstaller        = platinaGoMain + "/goes-installer"
 	platinaGoMainGoesPlatinaMk1       = platina + "/goes-platina-mk1"
@@ -99,6 +99,7 @@ var (
 		corebootPlatinaMk1,
 		goesPlatinaMk1Bmc,
 		platinaMk1BmcVmlinuz,
+		ubootPlatinaMk1Bmc,
 		platinaMk2Lc1BmcVmlinuz,
 		platinaMk2Mc1BmcVmlinuz,
 		corebootExampleAmd64Rom,
@@ -202,6 +203,8 @@ diag	include manufacturing diagnostics with BMC
 		goesBootArm:       "../goes-boot",
 		goesPlatinaMk1:    "../goes-platina-mk1",
 		goesPlatinaMk1Bmc: "../goes-bmc",
+		goesExample:       "../goes-example",
+		goesExampleArm:    "../goes-example",
 	}
 )
 
