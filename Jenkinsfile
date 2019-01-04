@@ -26,6 +26,13 @@ pipeline {
 			branch: 'master'
 			])
 		}
+		dir('goes-example') {
+		    git([
+			url: 'git@github.com:platinasystems/goes-example.git',
+			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
+			branch: 'master'
+			])
+		}
 		dir('goes-build') {
 		    git([
 			url: 'git@github.com:platinasystems/goes-build.git',
