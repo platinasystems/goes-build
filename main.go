@@ -28,6 +28,8 @@ const (
 	platinaGo          = platina + "/go"
 	platinaGoMain      = platinaGo + "/main"
 
+	platinaVnetMk1 = platina + "/vnet-platina-mk1"
+
 	platinaSystemBuildSrc = platina + "/system-build/src"
 
 	platinaGoMainIP                   = platinaGoMain + "/ip"
@@ -71,6 +73,8 @@ const (
 
 	ubootPlatinaMk1Bmc = "u-boot-platina-mk1-bmc"
 
+	vnetPlatinaMk1 = "vnet-platina-mk1"
+
 	zipPlatinaMk1Bmc = "platina-mk1-bmc.zip"
 )
 
@@ -97,6 +101,7 @@ var (
 		goesBootArm,
 		goesIP,
 		goesPlatinaMk1,
+		vnetPlatinaMk1,
 		platinaMk1Vmlinuz,
 		corebootPlatinaMk1,
 		goesPlatinaMk1Bmc,
@@ -163,6 +168,7 @@ diag	include manufacturing diagnostics with BMC
 		goesIP:                  platinaGoMainIP,
 		goesIPTest:              platinaGoMainIP,
 		goesPlatinaMk1:          platinaGoMainGoesPlatinaMk1,
+		vnetPlatinaMk1:          platinaVnetMk1,
 		platinaMk1Vmlinuz:       "platina-mk1_defconfig",
 		corebootPlatinaMk1:      corebootPlatinaMk1Config,
 		corebootPlatinaMk1Rom:   corebootPlatinaMk1Machine,
@@ -184,6 +190,7 @@ diag	include manufacturing diagnostics with BMC
 		goesPlatinaMk1Bmc: "../goes-bmc",
 		goesExample:       "../goes-example",
 		goesExampleArm:    "../goes-example",
+		vnetPlatinaMk1:    "../vnet-platina-mk1",
 	}
 	pkgbuilt = map[string]bool{}
 )
@@ -201,6 +208,7 @@ func init() {
 		goesIP:                  makeHost,
 		goesIPTest:              makeHostTest,
 		goesPlatinaMk1:          makeGoesPlatinaMk1,
+		vnetPlatinaMk1:          makeAmd64LinuxStatic,
 		platinaMk1Vmlinuz:       makeAmd64LinuxKernel,
 		corebootPlatinaMk1:      makeAmd64Boot,
 		corebootPlatinaMk1Rom:   makeAmd64CorebootRom,
