@@ -289,16 +289,21 @@ func makeArmLinuxStatic(out, name string) error {
 }
 
 func makeArmBoot(out, name string) (err error) {
+	machine := strings.TrimPrefix(out, "u-boot-")
+	makeDependent(machine + ".vmlinuz")
+	cmdline := "cp " + machine + ".vmlinuz " + machine + "-ker.bin"
+	if err := shellCommandRun(cmdline); err != nil {
+		return err
+	}
 	if err = armLinux.makeboot(out, "make "+name); err != nil {
 		return err
 	}
-	machine := strings.TrimPrefix(out, "u-boot-")
 	env := makeUbootEnv()
 	if err = ioutil.WriteFile(machine+"-env.bin", env, 0644); err != nil {
 		return err
 	}
-	cmdline := "cp worktrees/linux/" + machine + "/arch/arm/boot/dts/" +
-		machine + ".dtb ."
+	cmdline = "cp worktrees/linux/" + machine + "/arch/arm/boot/dts/" +
+		machine + ".dtb " + machine + "-dtb.bin"
 	if err := shellCommandRun(cmdline); err != nil {
 		return err
 	}
@@ -335,10 +340,11 @@ func makeArmZipfile(out, name string) (err error) {
 
 	for _, suffix := range []string{
 		"-env.bin",
+		"-ker.bin",
 		"-ini.bin",
 		"-ubo.bin",
 		"-ver.bin",
-		".dtb",
+		"-dtb.bin",
 	} {
 		file, err := os.Open(machine + suffix)
 		if err != nil {
@@ -411,7 +417,8 @@ func makeAmd64LinuxTest(out, name string) error {
 func makeAmd64CorebootRom(romfile, machine string) (err error) {
 	makeDependent("coreboot-" + machine)
 	makeDependent(machine + ".vmlinuz")
-	makeDependent(goesBoot)
+	makeDependent(goesPlatinaMk1Bmc)
+
 	dir := "worktrees/coreboot/" + machine
 	build := dir + "/build"
 	cbfstool := build + "/cbfstool"
