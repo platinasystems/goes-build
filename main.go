@@ -150,6 +150,7 @@ diag	include manufacturing diagnostics with BMC
 		goarch:           "arm",
 		goos:             "linux",
 		gnuPrefix:        "arm-linux-gnueabi-",
+		kernelMakeTarget: "zImage dtbs",
 		kernelPath:       "arch/arm/boot/zImage",
 		kernelConfigPath: "arch/arm/configs",
 		kernelArch:       "arm",
@@ -968,11 +969,12 @@ func (goenv *goenv) makeLinux(out string, config string) (err error) {
 	ver = strings.TrimLeft(ver, "v")
 	f := strings.Split(ver, "-")
 	id := f[0] + "-" + machine
-	if err := shellCommandRun("make -C " + dir + " " + goenv.kernelMakeTarget +
+	if err := shellCommandRun("make -C " + dir +
 		" ARCH=" + goenv.kernelArch +
 		" CROSS_COMPILE=" + goenv.gnuPrefix +
 		" KDEB_PKGVERSION=" + ver +
-		" KERNELRELEASE=" + id); err != nil {
+		" KERNELRELEASE=" + id + " " +
+		goenv.kernelMakeTarget); err != nil {
 		return err
 	}
 	cmdline := "cp " + dir + "/" + goenv.kernelPath + " " + out
