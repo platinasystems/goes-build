@@ -309,7 +309,7 @@ func makeArmBoot(out, name string) (err error) {
 		return err
 	}
 
-	uboot := makeUboot("worktrees/u-boot/" + machine + "/u-boot.imx")
+	uboot := makeUboot("worktrees/u-boot/" + machine + "/u-boot-dtb.imx")
 	if err = ioutil.WriteFile(machine+"-ubo.bin", uboot, 0644); err != nil {
 		return err
 	}
