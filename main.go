@@ -321,7 +321,7 @@ func makeArmZipfile(out, name string) (err error) {
 
 	makeDependent("u-boot-" + machine)
 
-	makeDependent(goesBootArm)
+	makeDependent(goesPlatinaMk1Bmc)
 	cmdline := "mkimage -C none -A arm -O linux -T ramdisk -d " +
 		machine + ".cpio.xz " + machine + "-ini.bin"
 	if err := shellCommandRun(cmdline); err != nil {
@@ -417,7 +417,7 @@ func makeAmd64LinuxTest(out, name string) error {
 func makeAmd64CorebootRom(romfile, machine string) (err error) {
 	makeDependent("coreboot-" + machine)
 	makeDependent(machine + ".vmlinuz")
-	makeDependent(goesPlatinaMk1Bmc)
+	makeDependent(goesBoot)
 
 	dir := "worktrees/coreboot/" + machine
 	build := dir + "/build"
