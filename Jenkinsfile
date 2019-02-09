@@ -54,9 +54,9 @@ pipeline {
 			branch: 'master'
 			])
 		}
-		dir('go') {
+		dir('goes-legacy') {
 		    git([
-			url: 'git@github.com:platinasystems/go.git',
+			url: 'git@github.com:platinasystems/goes-legacy.git',
 			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
 			branch: 'master'
 			])
