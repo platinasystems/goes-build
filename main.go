@@ -22,26 +22,27 @@ import (
 )
 
 const (
-	platina            = ".."
-	platinaFe1         = platina + "/fe1"
-	platinaFe1Firmware = platina + "/firmware-fe1a"
-	platinaGo          = platina + "/go"
-	platinaGoMain      = platinaGo + "/main"
+	platina               = ".."
+	platinaFe1            = platina + "/fe1"
+	platinaFe1Firmware    = platina + "/firmware-fe1a"
+	platinaGoes           = platina + "/goes"
+	platinaGoesLegacy     = platina + "/goes-legacy"
+	platinaGoesLegacyMain = platinaGoesLegacy + "/main"
 
 	platinaVnetMk1 = platina + "/vnet-platina-mk1"
 
 	platinaSystemBuildSrc = platina + "/system-build/src"
 
-	platinaGoMainIP                   = platinaGoMain + "/ip"
-	platinaGoMainGoesPrefix           = platinaGoMain + "goes-"
-	platinaGoMainGoesExample          = platina + "/goes-example"
-	platinaGoMainGoesBoot             = platina + "/goes-boot"
-	platinaGoMainGoesInstaller        = platinaGoMain + "/goes-installer"
-	platinaGoMainGoesPlatinaMk1       = platina + "/goes-platina-mk1"
-	platinaGoMainGoesPlatinaMk1Bmc    = platina + "/goes-bmc"
-	platinaGoMainGoesPlatinaMk2       = platinaGoMain + "/goes-platina-mk2"
-	platinaGoMainGoesPlatinaMk2Lc1Bmc = platinaGoMainGoesPlatinaMk2 + "-lc1-bmc"
-	platinaGoMainGoesPlatinaMk2Mc1Bmc = platinaGoMainGoesPlatinaMk2 + "-mc1-bmc"
+	platinaGoesMainIP                   = platinaGoesLegacyMain + "/ip"
+	platinaGoesMainGoesPrefix           = platinaGoesLegacyMain + "goes-"
+	platinaGoesMainGoesExample          = platina + "/goes-example"
+	platinaGoesMainGoesBoot             = platina + "/goes-boot"
+	platinaGoesMainGoesInstaller        = platinaGoesLegacyMain + "/goes-installer"
+	platinaGoesMainGoesPlatinaMk1       = platina + "/goes-platina-mk1"
+	platinaGoesMainGoesPlatinaMk1Bmc    = platina + "/goes-bmc"
+	platinaGoesMainGoesPlatinaMk2       = platinaGoesLegacyMain + "/goes-platina-mk2"
+	platinaGoesMainGoesPlatinaMk2Lc1Bmc = platinaGoesMainGoesPlatinaMk2 + "-lc1-bmc"
+	platinaGoesMainGoesPlatinaMk2Mc1Bmc = platinaGoesMainGoesPlatinaMk2 + "-mc1-bmc"
 
 	goesExample             = "goes-example"
 	goesExampleArm          = "goes-example-arm"
@@ -159,28 +160,28 @@ diag	include manufacturing diagnostics with BMC
 		cpioTrimPrefix:   "goes-",
 	}
 	mainPkg = map[string]string{
-		goesExample:             platinaGoMainGoesExample,
+		goesExample:             platinaGoesMainGoesExample,
 		exampleAmd64Vmlinuz:     "platina-example-amd64_defconfig",
 		corebootExampleAmd64:    corebootExampleAmd64Config,
 		corebootExampleAmd64Rom: corebootExampleAmd64Machine,
-		goesExampleArm:          platinaGoMainGoesExample,
-		goesBoot:                platinaGoMainGoesBoot,
-		goesBootArm:             platinaGoMainGoesBoot,
-		goesIP:                  platinaGoMainIP,
-		goesIPTest:              platinaGoMainIP,
-		goesPlatinaMk1:          platinaGoMainGoesPlatinaMk1,
+		goesExampleArm:          platinaGoesMainGoesExample,
+		goesBoot:                platinaGoesMainGoesBoot,
+		goesBootArm:             platinaGoesMainGoesBoot,
+		goesIP:                  platinaGoesMainIP,
+		goesIPTest:              platinaGoesMainIP,
+		goesPlatinaMk1:          platinaGoesMainGoesPlatinaMk1,
 		vnetPlatinaMk1:          platinaVnetMk1,
 		platinaMk1Vmlinuz:       "platina-mk1_defconfig",
 		corebootPlatinaMk1:      corebootPlatinaMk1Config,
 		corebootPlatinaMk1Rom:   corebootPlatinaMk1Machine,
-		goesPlatinaMk1Test:      platinaGoMainGoesPlatinaMk1,
-		goesPlatinaMk1Installer: platinaGoMainGoesPlatinaMk1,
-		goesPlatinaMk1Bmc:       platinaGoMainGoesPlatinaMk1Bmc,
+		goesPlatinaMk1Test:      platinaGoesMainGoesPlatinaMk1,
+		goesPlatinaMk1Installer: platinaGoesMainGoesPlatinaMk1,
+		goesPlatinaMk1Bmc:       platinaGoesMainGoesPlatinaMk1Bmc,
 		platinaMk1BmcVmlinuz:    "platina-mk1-bmc_defconfig",
 		ubootPlatinaMk1Bmc:      "platinamx6boards_qspi_defconfig",
-		goesPlatinaMk2Lc1Bmc:    platinaGoMainGoesPlatinaMk2Lc1Bmc,
+		goesPlatinaMk2Lc1Bmc:    platinaGoesMainGoesPlatinaMk2Lc1Bmc,
 		platinaMk2Lc1BmcVmlinuz: "platina-mk2-lc1-bmc_defconfig",
-		goesPlatinaMk2Mc1Bmc:    platinaGoMainGoesPlatinaMk2Mc1Bmc,
+		goesPlatinaMk2Mc1Bmc:    platinaGoesMainGoesPlatinaMk2Mc1Bmc,
 		platinaMk2Mc1BmcVmlinuz: "platina-mk2-mc1-bmc_defconfig",
 	}
 	makeFun map[string]func(out, name string) error
@@ -484,7 +485,7 @@ func makeGoesPlatinaMk1Installer(out, name string) error {
 		return err
 	}
 	err = amd64Linux.godoforpkg(out, "build", "-o", tinstaller,
-		platinaGoMainGoesInstaller)
+		platinaGoesMainGoesInstaller)
 	if err != nil {
 		return err
 	}
@@ -698,13 +699,13 @@ func (goenv *goenv) godoindir(dir string, args ...string) error {
 }
 
 func (goenv *goenv) godo(args ...string) error {
-	return goenv.godoindir("../go", args...)
+	return goenv.godoindir(platinaGoes, args...)
 }
 
 func (goenv *goenv) godoforpkg(pkg string, args ...string) error {
 	dir := pkgdir[pkg]
 	if dir == "" {
-		dir = "../go" // legacy packages
+		dir = platinaGoes // legacy packages
 	}
 	return goenv.godoindir(dir, args...)
 }
