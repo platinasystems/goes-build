@@ -401,7 +401,7 @@ func makeArmLinuxInitramfs(out, name string) (err error) {
 }
 
 func makeAmd64Boot(out, name string) (err error) {
-	return amd64Linux.makeboot(out, "make crossgcc-i386 && make "+name)
+	return amd64Linux.makeboot(out, "MAKEINFO=missing make crossgcc-i386 && make "+name)
 }
 
 func makeAmd64Linux(out, name string) error {
