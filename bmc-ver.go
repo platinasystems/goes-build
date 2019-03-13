@@ -33,8 +33,8 @@ var Images = [5]IMAGE{
 	{"ubo", "worktrees/u-boot/platina-mk1-bmc", "platina-mk1-bmc-ubo.bin"},
 	{"dtb", "worktrees/linux/platina-mk1-bmc", "platina-mk1-bmc-dtb.bin"},
 	{"env", ".", "platina-mk1-bmc-env.bin"},
-	{"ker", "worktrees/linux/platina-mk1-bmc", "platina-mk1-bmc-ker.bin"},
-	{"ini", "../goes-bmc", "platina-mk1-bmc-ini.bin"},
+	{"ker", "worktrees/linux/platina-mk1-bmc", "platina-mk1-bmc.vmlinuz"},
+	{"itb", "../goes-bmc", "platina-mk1-bmc-itb.bin"},
 }
 var ImgInfo [5]IMGINFO
 

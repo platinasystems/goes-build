@@ -302,7 +302,10 @@ func makeArmBoot(out, name string) (err error) {
 	if err = armLinux.makeboot(out, "make "+name); err != nil {
 		return err
 	}
-	env := makeUbootEnv()
+	env, err := makeUbootEnv()
+	if err != nil {
+		return err
+	}
 	if err = ioutil.WriteFile(machine+"-env.bin", env, 0644); err != nil {
 		return err
 	}
@@ -323,6 +326,13 @@ func makeArmItb(out, name string) (err error) {
 	cmdline := "mkimage -f goes-bmc.its " + machine + "-itb.bin"
 	err = shellCommandRun(cmdline)
 
+	s, err := os.Stat(machine + "-itb.bin")
+	if err != nil {
+		return
+	}
+	if s.Size() > 0x00800000 {
+		return fmt.Errorf("ITB size of %d exceeds limit of %d", s.Size(), 0x00800000)
+	}
 	return
 }
 
@@ -406,13 +416,28 @@ func makeArmLinuxKernel(out, name string) (err error) {
 	if err != nil {
 		return
 	}
-	cmdline := "cp " + machine + ".vmlinuz " +
-		machine + "-ker.bin"
-	if err = shellCommandRun(cmdline); err != nil {
-		return err
+	s, err := os.Stat(machine + ".vmlinuz")
+	if err != nil {
+		return
 	}
-	cmdline = "cp worktrees/linux/" + machine + "/arch/arm/boot/dts/" +
-		machine + ".dtb " + machine + "-dtb.bin"
+	if legacy {
+		if s.Size() > 0x00200000 {
+			return fmt.Errorf("Kernel size of %d exceeds legacy max of %d", s.Size(), 0x00200000)
+		}
+		cmdline := "cp " + machine + ".vmlinuz " +
+			machine + "-ker.bin"
+		if err = shellCommandRun(cmdline); err != nil {
+			return err
+		}
+	}
+	dtb := "worktrees/linux/" + machine + "/arch/arm/boot/dts/" + machine + ".dtb"
+	if legacy {
+		s, err = os.Stat(dtb)
+		if s.Size() > 0x0000f000 {
+			return fmt.Errorf("Device tree size of %d exceeds legacy max of %d", s.Size(), 0x0000f000)
+		}
+	}
+	cmdline := "cp " + dtb + " " + machine + "-dtb.bin"
 	if err = shellCommandRun(cmdline); err != nil {
 		return err
 	}
@@ -430,10 +455,19 @@ func makeArmLinuxInitramfs(out, name string) (err error) {
 	if err != nil {
 		return
 	}
-	cmdline := "mkimage -C none -A arm -O linux -T ramdisk -d " +
-		machine + ".cpio.xz " + machine + "-ini.bin"
-	if err = shellCommandRun(cmdline); err != nil {
-		return err
+	if legacy {
+		cmdline := "mkimage -C none -A arm -O linux -T ramdisk -d " +
+			machine + ".cpio.xz " + machine + "-ini.bin"
+		if err = shellCommandRun(cmdline); err != nil {
+			return err
+		}
+		s, err := os.Stat(machine + "-ini.bin")
+		if err != nil {
+			return err
+		}
+		if s.Size() > 0x00300000 {
+			return fmt.Errorf("Ramdisk size %d is too big for legacy format (limit %d)", s.Size(), 0x00300000)
+		}
 	}
 
 	return

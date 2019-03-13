@@ -33,8 +33,6 @@
 			arch = "arm";
 			os = "linux";
 			compression = "none";
-			load = <0x89000000>;
-			entry = <0x89000000>;
 			hash@1 {
 				algo = "sha256";
 			};
