@@ -21,6 +21,8 @@ import (
 	"github.com/cavaliercoder/go-cpio"
 )
 
+const legacy = true
+
 const (
 	platina               = ".."
 	platinaFe1            = platina + "/fe1"
@@ -71,6 +73,8 @@ const (
 	platinaMk1BmcVmlinuz    = "platina-mk1-bmc.vmlinuz"
 	platinaMk2Lc1BmcVmlinuz = "platina-mk2-lc1-bmc.vmlinuz"
 	platinaMk2Mc1BmcVmlinuz = "platina-mk2-mc1-bmc.vmlinuz"
+
+	itbPlatinaMk1Bmc = "platina-mk1-bmc.itb"
 
 	ubootPlatinaMk1Bmc = "u-boot-platina-mk1-bmc"
 
@@ -183,6 +187,7 @@ diag	include manufacturing diagnostics with BMC
 		platinaMk2Lc1BmcVmlinuz: "platina-mk2-lc1-bmc_defconfig",
 		goesPlatinaMk2Mc1Bmc:    platinaGoesMainGoesPlatinaMk2Mc1Bmc,
 		platinaMk2Mc1BmcVmlinuz: "platina-mk2-mc1-bmc_defconfig",
+		itbPlatinaMk1Bmc:        "platina-mk1-bmc.its",
 	}
 	makeFun map[string]func(out, name string) error
 	pkgdir  = map[string]string{
@@ -224,6 +229,7 @@ func init() {
 		goesPlatinaMk2Mc1Bmc:    makeArmLinuxStatic,
 		platinaMk2Mc1BmcVmlinuz: makeArmLinuxKernel,
 		zipPlatinaMk1Bmc:        makeArmZipfile,
+		itbPlatinaMk1Bmc:        makeArmItb,
 	}
 }
 
@@ -292,11 +298,6 @@ func makeArmLinuxStatic(out, name string) error {
 
 func makeArmBoot(out, name string) (err error) {
 	machine := strings.TrimPrefix(out, "u-boot-")
-	makeDependent(machine + ".vmlinuz")
-	cmdline := "cp " + machine + ".vmlinuz " + machine + "-ker.bin"
-	if err := shellCommandRun(cmdline); err != nil {
-		return err
-	}
 	if err = armLinux.makeboot(out, "make "+name); err != nil {
 		return err
 	}
@@ -304,12 +305,6 @@ func makeArmBoot(out, name string) (err error) {
 	if err = ioutil.WriteFile(machine+"-env.bin", env, 0644); err != nil {
 		return err
 	}
-	cmdline = "cp worktrees/linux/" + machine + "/arch/arm/boot/dts/" +
-		machine + ".dtb " + machine + "-dtb.bin"
-	if err := shellCommandRun(cmdline); err != nil {
-		return err
-	}
-
 	uboot := makeUboot("worktrees/u-boot/" + machine + "/u-boot-dtb.imx")
 	if err = ioutil.WriteFile(machine+"-ubo.bin", uboot, 0644); err != nil {
 		return err
@@ -318,17 +313,25 @@ func makeArmBoot(out, name string) (err error) {
 	return nil
 }
 
+func makeArmItb(out, name string) (err error) {
+	machine := strings.TrimSuffix(out, ".itb")
+
+	makeDependent(goesPlatinaMk1Bmc)
+	makeDependent(machine + ".vmlinuz")
+
+	cmdline := "mkimage -f goes-bmc.its " + machine + "-itb.bin"
+	err = shellCommandRun(cmdline)
+
+	return
+}
+
 func makeArmZipfile(out, name string) (err error) {
 	machine := strings.TrimSuffix(out, ".zip")
 
 	makeDependent("u-boot-" + machine)
-
 	makeDependent(goesPlatinaMk1Bmc)
-	cmdline := "mkimage -C none -A arm -O linux -T ramdisk -d " +
-		machine + ".cpio.xz " + machine + "-ini.bin"
-	if err := shellCommandRun(cmdline); err != nil {
-		return err
-	}
+	makeDependent(machine + ".vmlinuz")
+	makeDependent(machine + ".itb")
 
 	makeVer("rel") // FIXME
 
@@ -340,14 +343,22 @@ func makeArmZipfile(out, name string) (err error) {
 	zipWriter := zip.NewWriter(zipFile)
 	defer zipWriter.Close()
 
-	for _, suffix := range []string{
+	suffixes := []string{
 		"-env.bin",
-		"-ker.bin",
-		"-ini.bin",
 		"-ubo.bin",
 		"-ver.bin",
-		"-dtb.bin",
-	} {
+	}
+
+	if legacy {
+		suffixes = append(suffixes, "-ker.bin")
+		suffixes = append(suffixes, "-ini.bin")
+		suffixes = append(suffixes, "-dtb.bin")
+
+	} else {
+		suffixes = append(suffixes, "-itb.bin")
+	}
+
+	for _, suffix := range suffixes {
 		file, err := os.Open(machine + suffix)
 		if err != nil {
 			fmt.Printf("Error opening %s: %s\n", machine+suffix,
@@ -389,15 +400,42 @@ func makeArmZipfile(out, name string) (err error) {
 }
 
 func makeArmLinuxKernel(out, name string) (err error) {
-	return armLinux.makeLinux(out, name)
+	machine := strings.TrimSuffix(out, ".vmlinuz")
+	err = armLinux.makeLinux(out, name)
+	if err != nil {
+		return
+	}
+	cmdline := "cp " + machine + ".vmlinuz " +
+		machine + "-ker.bin"
+	if err = shellCommandRun(cmdline); err != nil {
+		return err
+	}
+	cmdline = "cp worktrees/linux/" + machine + "/arch/arm/boot/dts/" +
+		machine + ".dtb " + machine + "-dtb.bin"
+	if err = shellCommandRun(cmdline); err != nil {
+		return err
+	}
+	return
 }
 
 func makeArmLinuxInitramfs(out, name string) (err error) {
+	machine := strings.TrimPrefix(out, "goes-")
+	machine = strings.TrimSuffix(machine, ".cpio.xz")
 	err = makeArmLinuxStatic(out, name)
 	if err != nil {
 		return
 	}
-	return armLinux.makeCpioArchive(out)
+	err = armLinux.makeCpioArchive(out)
+	if err != nil {
+		return
+	}
+	cmdline := "mkimage -C none -A arm -O linux -T ramdisk -d " +
+		machine + ".cpio.xz " + machine + "-ini.bin"
+	if err = shellCommandRun(cmdline); err != nil {
+		return err
+	}
+
+	return
 }
 
 func makeAmd64Boot(out, name string) (err error) {
