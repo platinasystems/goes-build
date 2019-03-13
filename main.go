@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -144,7 +145,7 @@ diag	include manufacturing diagnostics with BMC
 		goarch:           "amd64",
 		goos:             "linux",
 		gnuPrefix:        "x86_64-linux-gnu-",
-		kernelMakeTarget: "bzImage bindeb-pkg",
+		kernelMakeTarget: "bindeb-pkg",
 		kernelPath:       "arch/x86/boot/bzImage",
 		kernelConfigPath: "arch/x86/configs",
 		kernelArch:       "x86_64",
@@ -1009,6 +1010,7 @@ func (goenv *goenv) makeLinux(out string, config string) (err error) {
 	f := strings.Split(ver, "-")
 	id := f[0] + "-" + machine
 	if err := shellCommandRun("make -C " + dir +
+		" -j " + strconv.Itoa(runtime.NumCPU()*2) +
 		" ARCH=" + goenv.kernelArch +
 		" CROSS_COMPILE=" + goenv.gnuPrefix +
 		" KDEB_PKGVERSION=" + ver +
