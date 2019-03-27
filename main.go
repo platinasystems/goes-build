@@ -124,7 +124,7 @@ var (
 	nFlag = flag.Bool("n", false,
 		"print 'go build' commands but do not run them.")
 	oFlag    = flag.String("o", "", "output file name of PACKAGE build")
-	rFlag    = flag.Bool("r", false, "rebase worktrees before build")
+	rFlag    = flag.String("r", "", "rebase worktrees before build")
 	tagsFlag = flag.String("tags", "", `
 debug	disable optimizer and increase vnet log
 diag	include manufacturing diagnostics with BMC
@@ -999,10 +999,9 @@ func configWorktree(repo string, machine string, config string) (workdir string,
 		return
 	}
 	if err == nil {
-		if *rFlag {
+		if *rFlag != "" {
 			if err := shellCommandRun("cd " + workdir +
-				" && git fetch origin " +
-				" && git rebase origin" +
+				" && git rebase " + *rFlag +
 				" && " + config); err != nil {
 				return "", err
 			}
