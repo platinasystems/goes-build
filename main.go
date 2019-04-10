@@ -326,8 +326,15 @@ func makeArmItb(out, name string) (err error) {
 	if err != nil {
 		return
 	}
-	if s.Size() > 0x00800000 {
-		return fmt.Errorf("ITB size of %d exceeds limit of %d", s.Size(), 0x00800000)
+	limit := int64(0x00800000)
+	kind := ""
+	if legacy {
+		limit = 0x00500000
+		kind = "legacy "
+	}
+	if s.Size() > limit {
+		return fmt.Errorf("ITB size of %d exceeds %slimit of %d",
+			s.Size(), kind, limit)
 	}
 	return
 }
@@ -350,25 +357,32 @@ func makeArmZipfile(out, name string) (err error) {
 	zipWriter := zip.NewWriter(zipFile)
 	defer zipWriter.Close()
 
-	suffixes := []string{
-		"-env.bin",
-		"-ubo.bin",
-		"-ver.bin",
+	type filemap struct {
+		in     string
+		out    string
+		offset int64
+		len    int64
+	}
+
+	fileMaps := []filemap{
+		{in: "-env.bin"},
+		{in: "-ubo.bin"},
+		{in: "-ver.bin"},
 	}
 
 	if legacy {
-		suffixes = append(suffixes, "-ker.bin")
-		suffixes = append(suffixes, "-ini.bin")
-		suffixes = append(suffixes, "-dtb.bin")
-
+		fileMaps = append(fileMaps, filemap{in: "-itb.bin",
+			out: "-ker.bin", offset: 0x0, len: 0x200000})
+		fileMaps = append(fileMaps, filemap{in: "-itb.bin",
+			out: "-ini.bin", offset: 0x200000, len: 0x300000})
 	} else {
-		suffixes = append(suffixes, "-itb.bin")
+		fileMaps = append(fileMaps, filemap{in: "-itb.bin"})
 	}
 
-	for _, suffix := range suffixes {
-		file, err := os.Open(machine + suffix)
+	for _, fileMap := range fileMaps {
+		file, err := os.Open(machine + fileMap.in)
 		if err != nil {
-			fmt.Printf("Error opening %s: %s\n", machine+suffix,
+			fmt.Printf("Error opening %s: %s\n", machine+fileMap.out,
 				err)
 			os.Remove(machine + ".zip")
 			panic(err)
@@ -382,10 +396,24 @@ func makeArmZipfile(out, name string) (err error) {
 			panic(err)
 		}
 
+		if fileMap.offset != 0 && info.Size() <= fileMap.offset {
+			fmt.Printf("Skipping %s offset %d greater than length %d\n",
+				machine+fileMap.in, fileMap.offset, info.Size())
+			continue
+		}
+
 		header, err := zip.FileInfoHeader(info)
 		if err != nil {
 			os.Remove(machine + ".zip")
 			panic(err)
+		}
+		if fileMap.out != "" {
+			header.Name = machine + fileMap.out
+		}
+
+		len := info.Size() - fileMap.offset
+		if fileMap.len != 0 && fileMap.len < len {
+			len = fileMap.len
 		}
 
 		// Change to deflate to gain better compression
@@ -397,11 +425,27 @@ func makeArmZipfile(out, name string) (err error) {
 			os.Remove(machine + ".zip")
 			panic(err)
 		}
-		if _, err = io.Copy(writer, file); err != nil {
+		off, err := file.Seek(fileMap.offset, io.SeekStart)
+		if err != nil {
 			os.Remove(machine + ".zip")
 			panic(err)
 		}
-		armLinux.log("added", machine+suffix, "to", machine+".zip")
+		if off != fileMap.offset {
+			os.Remove(machine + ".zip")
+			panic(fmt.Errorf("Seek to %d failed - got %d",
+				fileMap.offset, off))
+		}
+		written, err := io.CopyN(writer, file, len)
+		if err != nil {
+			os.Remove(machine + ".zip")
+			panic(err)
+		}
+		if written != len {
+			os.Remove(machine + ".zip")
+			panic(fmt.Errorf("Expected to write %d but wrote %d",
+				len, written))
+		}
+		armLinux.log("added", header.Name, "to", machine+".zip")
 	}
 	return nil
 }
@@ -412,27 +456,7 @@ func makeArmLinuxKernel(out, name string) (err error) {
 	if err != nil {
 		return
 	}
-	s, err := os.Stat(machine + ".vmlinuz")
-	if err != nil {
-		return
-	}
-	if legacy {
-		if s.Size() > 0x00200000 {
-			return fmt.Errorf("Kernel size of %d exceeds legacy max of %d", s.Size(), 0x00200000)
-		}
-		cmdline := "cp " + machine + ".vmlinuz " +
-			machine + "-ker.bin"
-		if err = shellCommandRun(cmdline); err != nil {
-			return err
-		}
-	}
 	dtb := "worktrees/linux/" + machine + "/arch/arm/boot/dts/" + machine + ".dtb"
-	if legacy {
-		s, err = os.Stat(dtb)
-		if s.Size() > 0x0000f000 {
-			return fmt.Errorf("Device tree size of %d exceeds legacy max of %d", s.Size(), 0x0000f000)
-		}
-	}
 	cmdline := "cp " + dtb + " " + machine + "-dtb.bin"
 	if err = shellCommandRun(cmdline); err != nil {
 		return err
@@ -448,23 +472,6 @@ func makeArmLinuxInitramfs(out, name string) (err error) {
 		return
 	}
 	err = armLinux.makeCpioArchive(out)
-	if err != nil {
-		return
-	}
-	if legacy {
-		cmdline := "mkimage -C none -A arm -O linux -T ramdisk -d " +
-			machine + ".cpio.xz " + machine + "-ini.bin"
-		if err = shellCommandRun(cmdline); err != nil {
-			return err
-		}
-		s, err := os.Stat(machine + "-ini.bin")
-		if err != nil {
-			return err
-		}
-		if s.Size() > 0x00300000 {
-			return fmt.Errorf("Ramdisk size %d is too big for legacy format (limit %d)", s.Size(), 0x00300000)
-		}
-	}
 
 	return
 }
