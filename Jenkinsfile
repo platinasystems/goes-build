@@ -72,7 +72,7 @@ pipeline {
 				reference: '',
 				trackingSubmodules: false]], 
 				submoduleCfg: [], 
-				userRemoteConfigs: [[url: 'git@github.com:platinasystems/coreboot.git', credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41"]]])
+				userRemoteConfigs: [[url: 'https://github.com/platinasystems/coreboot.git']]])
 		}
 		dir('linux') {
 		    git([
