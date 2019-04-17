@@ -110,8 +110,6 @@ var (
 		goesPlatinaMk1Bmc,
 		platinaMk1BmcVmlinuz,
 		ubootPlatinaMk1Bmc,
-		platinaMk2Lc1BmcVmlinuz,
-		platinaMk2Mc1BmcVmlinuz,
 		corebootExampleAmd64Rom,
 		corebootPlatinaMk1Rom,
 		zipPlatinaMk1Bmc,
