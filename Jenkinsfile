@@ -96,8 +96,6 @@ pipeline {
 		    sshagent(credentials: ['570701f7-c819-4db2-bd31-a0da8a452b41']) {
 			echo "Updating worktrees"
 			sh 'set -x;env;pwd;[ -d worktrees ] && for repo in worktrees/*/*; do echo $repo; [ -d "$repo" ] && (cd $repo;git fetch origin;git reset --hard HEAD;git rebase origin/master);done || true'
-			echo "Setting git config"
-			sh 'git config --global url.git@github.com:.insteadOf \"https://github.com/\"'
 			echo "Building goes..."
 			sh 'export PATH=/usr/local/go/bin:/usr/local/x-tools/arm-unknown-linux-gnueabi/bin:${PATH}; go build -v && ./goes-build -x -v -z'
 		    }
