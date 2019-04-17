@@ -104,8 +104,6 @@ var (
 		corebootExampleAmd64,
 		goesExampleArm,
 		goesBoot,
-		goesBootArm,
-		goesIP,
 		goesPlatinaMk1,
 		vnetPlatinaMk1,
 		platinaMk1Vmlinuz,
