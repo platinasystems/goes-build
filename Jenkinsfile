@@ -62,11 +62,17 @@ pipeline {
 			])
 		}
 		dir('coreboot') {
-		    git([
-			url: 'git@github.com:platinasystems/coreboot.git',
-			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
-			branch: 'master'
-			])
+		    checkout([$class: 'GitSCM',
+				branches: [[name: '*/master']],
+				doGenerateSubmoduleConfigurations: false,
+				extensions: [[$class: 'SubmoduleOption',
+				disableSubmodules: false,
+				parentCredentials: false,
+				recursiveSubmodules: true,
+				reference: '',
+				trackingSubmodules: false]], 
+				submoduleCfg: [], 
+				userRemoteConfigs: [[url: 'git@github.com:platinasystems/coreboot.git', credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41"]]])
 		}
 		dir('linux') {
 		    git([
