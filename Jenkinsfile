@@ -8,10 +8,13 @@ import groovy.transform.Field
 
 pipeline {
     agent any
+    environment {
+	GOPATH = "${env.PWD}/go"
+    }
     stages {
 	stage('Checkout') {
 	    steps {
-		echo "Running build #${env.BUILD_ID} on ${env.JENKINS_URL}"
+		echo "Running build #${env.BUILD_ID} on ${env.JENKINS_URL} GOPATH ${env.GOPATH}"
 		dir('goes-boot') {
 		    git([
 			url: 'https://github.com/platinasystems/goes-boot.git',
