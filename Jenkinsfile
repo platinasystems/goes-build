@@ -8,7 +8,7 @@ import groovy.transform.Field
 
 pipeline {
     agent any
-    withEnv(['GOPATH = "${env.WORKSPACE}/go"']) {
+    withEnv(["GOPATH = ${env.WORKSPACE}/go"]) {
 	stages {
 	    stage('Checkout') {
 		steps {
