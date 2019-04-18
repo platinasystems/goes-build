@@ -14,50 +14,37 @@ pipeline {
 		echo "Running build #${env.BUILD_ID} on ${env.JENKINS_URL}"
 		dir('goes-boot') {
 		    git([
-			url: 'git@github.com:platinasystems/goes-boot.git',
-			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
+			url: 'https://github.com/platinasystems/goes-boot.git',
 			branch: 'master'
 			])
 		}
 		dir('goes-bmc') {
 		    git([
-			url: 'git@github.com:platinasystems/goes-bmc.git',
-			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
+			url: 'https://github.com/platinasystems/goes-bmc.git',
 			branch: 'master'
 			])
 		}
 		dir('goes-example') {
 		    git([
-			url: 'git@github.com:platinasystems/goes-example.git',
-			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
+			url: 'https://github.com/platinasystems/goes-example.git',
 			branch: 'master'
 			])
 		}
 		dir('goes-build') {
 		    git([
-			url: 'git@github.com:platinasystems/goes-build.git',
-			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
+			url: 'https://github.com/platinasystems/goes-build.git',
 			branch: 'master'
 			])
 		}
 		dir('goes-platina-mk1') {
 		    git([
-			url: 'git@github.com:platinasystems/goes-platina-mk1.git',
-			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
+			url: 'https://github.com/platinasystems/goes-platina-mk1.git',
 			branch: 'master'
 			])
 		}
 		dir('vnet-platina-mk1') {
 		    git([
-			url: 'git@github.com:platinasystems/vnet-platina-mk1.git',
-			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
-			branch: 'master'
-			])
-		}
-		dir('goes-legacy') {
-		    git([
-			url: 'git@github.com:platinasystems/goes-legacy.git',
-			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
+			url: 'https://github.com/platinasystems/vnet-platina-mk1.git',
 			branch: 'master'
 			])
 		}
@@ -75,16 +62,16 @@ pipeline {
 				userRemoteConfigs: [[url: 'https://github.com/platinasystems/coreboot.git']]])
 		}
 		dir('linux') {
-		    git([
-			url: 'git@github.com:platinasystems/linux.git',
-			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
-			branch: 'master'
-			])
+		    checkout([$class: 'GitSCM',
+				branches: [[name: 'master']], 
+				doGenerateSubmoduleConfigurations: false, 
+				extensions: [[$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: true]],
+				submoduleCfg: [], 
+				userRemoteConfigs: [[url: 'https://github.com/platinasystems/linux.git']]])
 		}
 		dir('u-boot') {
 		    git([
-			url: 'git@github.com:platinasystems/u-boot.git',
-			credentialsId: "570701f7-c819-4db2-bd31-a0da8a452b41",
+			url: 'https://github.com/platinasystems/u-boot.git',
 			branch: 'master'
 			])
 		}
