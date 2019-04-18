@@ -10,6 +10,7 @@ pipeline {
     agent any
     environment {
 	GOPATH = "$WORKSPACE/go-pkg"
+	HOME = "$WORKSPACE"
     }
     stages {
 	stage('Checkout') {
