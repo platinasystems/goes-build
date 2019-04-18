@@ -105,6 +105,7 @@ var (
 		goesExampleArm,
 		goesBoot,
 		goesPlatinaMk1,
+		vnetPlatinaMk1,
 		platinaMk1Vmlinuz,
 		corebootPlatinaMk1,
 		goesPlatinaMk1Bmc,
