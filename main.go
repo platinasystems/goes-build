@@ -19,7 +19,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/cavaliercoder/go-cpio"
+	"github.com/platinasystems/go-cpio"
 )
 
 const legacy = true
