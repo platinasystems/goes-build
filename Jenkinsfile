@@ -84,8 +84,8 @@ pipeline {
 			echo "Updating worktrees"
 			sh 'set -x;env;pwd;[ -d worktrees ] && for repo in worktrees/*/*; do echo $repo; [ -d "$repo" ] && (cd $repo;git fetch origin;git reset --hard HEAD;git rebase origin/master);done || true'
 			echo "Setting git config"
-			sh 'git config --global url.git@github.com:platinasystems/fe1.insteadOf \"https://github.com/platinasystems/fe1/\"'
-			sh 'git config --global url.git@github.com:platinasystems/firmware-fe1.insteadOf \"https://github.com/platinasystems/firmware-fe1/\"'
+			sh 'git config --global url.git@github.com:platinasystems/fe1.insteadOf "https://github.com/platinasystems/fe1/"'
+			sh 'git config --global url.git@github.com:platinasystems/firmware-fe1.insteadOf "https://github.com/platinasystems/firmware-fe1/"'
 			echo "Building goes..."
 			sh 'export PATH=/usr/local/go/bin:/usr/local/x-tools/arm-unknown-linux-gnueabi/bin:${PATH}; go build -v && ./goes-build -x -v -z'
 		    }
