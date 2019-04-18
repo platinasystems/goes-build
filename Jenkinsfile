@@ -9,7 +9,7 @@ import groovy.transform.Field
 pipeline {
     agent any
     environment {
-	GOPATH = pwd() + "/gomods"
+	GOPATH = "$PWD/go-pkg"
     }
     stages {
 	stage('Checkout') {
