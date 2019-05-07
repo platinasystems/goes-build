@@ -69,7 +69,7 @@ pipeline {
 		    checkout([$class: 'GitSCM',
 			      branches: [[name: 'master']], 
 			      doGenerateSubmoduleConfigurations: false, 
-			      extensions: [[$class: 'CloneOption', depth: 300, noTags: false, reference: '', shallow: true, honorRefspec: true]],
+			      extensions: [[$class: 'CloneOption', noTags: false, reference: '', shallow: false, honorRefspec: true]],
 			      submoduleCfg: [], 
 			      userRemoteConfigs: [[url: 'https://github.com/platinasystems/linux.git']]])
 		}
