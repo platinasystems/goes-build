@@ -16,6 +16,12 @@ pipeline {
 	stage('Checkout') {
 	    steps {
 		echo "Running build #${env.BUILD_ID} on ${env.JENKINS_URL} GOPATH ${GOPATH}"
+		dir('goes') {
+		    git([
+			url: 'https://github.com/platinasystems/goes.git',
+			branch: 'master'
+		    ])
+		}
 		dir('goes-boot') {
 		    git([
 			url: 'https://github.com/platinasystems/goes-boot.git',
@@ -111,7 +117,7 @@ pipeline {
 	    mail body: "GOES-BUILD build ok: ${env.BUILD_URL}\n",
 		from: email_from,
 		replyTo: email_reply_to,
-		subject: 'GOES build ok',
+		subject: 'GOES-BUILD build ok',
 		to: email_to
 	}
 	failure {
