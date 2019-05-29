@@ -22,8 +22,6 @@ import (
 	"github.com/platinasystems/go-cpio"
 )
 
-const legacy = true
-
 const (
 	platina               = ".."
 	platinaFe1            = platina + "/fe1"
@@ -121,6 +119,8 @@ var (
 		"GOOS of PACKAGE build")
 	cloneFlag = flag.Bool("clone", false,
 		"Fallback to 'git clone' if git worktree does not work.")
+	legacyFlag = flag.Bool("legacy", false,
+		"Use legacy flash layout.")
 	nFlag = flag.Bool("n", false,
 		"print 'go build' commands but do not run them.")
 	oFlag    = flag.String("o", "", "output file name of PACKAGE build")
@@ -328,7 +328,7 @@ func makeArmItb(out, name string) (err error) {
 	}
 	limit := int64(0x00800000)
 	kind := ""
-	if legacy {
+	if *legacyFlag {
 		limit = 0x00500000
 		kind = "legacy "
 	}
@@ -370,7 +370,7 @@ func makeArmZipfile(out, name string) (err error) {
 		{in: "-ver.bin"},
 	}
 
-	if legacy {
+	if *legacyFlag {
 		fileMaps = append(fileMaps, filemap{in: "-itb.bin",
 			out: "-ker.bin", offset: 0x0, len: 0x200000})
 		fileMaps = append(fileMaps, filemap{in: "-itb.bin",
