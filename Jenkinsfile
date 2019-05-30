@@ -2,7 +2,7 @@
 
 import groovy.transform.Field
 
-@Field String email_to = 'sw@platinasystems.com'
+@Field String email_to = 'kph@platinasystems.com'
 @Field String email_from = 'jenkins-bot@platinasystems.com'
 @Field String email_reply_to = 'no-reply@platinasystems.com'
 
@@ -122,18 +122,18 @@ pipeline {
     post {
 	success {
 	    archiveArtifacts artifacts: 'goes-build/*.rom,goes-build/*.zip,goes-build/worktrees/linux/*.deb,goes-build/worktrees/linux/*.changes,goes-bmc/goes-platina-mk1-bmc,goes-boot/goes-boot,goes-example/goes-example,goes-example/goes-example-arm,goes-platina-mk1/goes-platina-mk1,vnet-platina-mk1/vnet-platina-mk1'
-	    mail body: "GOES-BUILD build ok: ${env.BUILD_URL}\n",
+	    mail body: "[kph] GOES-BUILD build ok: ${env.BUILD_URL}\n",
 		from: email_from,
 		replyTo: email_reply_to,
-		subject: 'GOES-BUILD build ok',
+		subject: '[kph] GOES-BUILD build ok',
 		to: email_to
 	}
 	failure {
-	    cleanWs()
-	    mail body: "GOES-BUILD build error: ${env.BUILD_URL}",
+	    //cleanWs()
+	    mail body: "[kph] GOES-BUILD build error: ${env.BUILD_URL}",
 		from: email_from,
 		replyTo: email_reply_to,
-		subject: 'GOES-BUILD BUILD FAILED',
+		subject: '[kph] GOES-BUILD BUILD FAILED',
 		to: email_to
 	}
     }
