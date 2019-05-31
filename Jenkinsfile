@@ -114,6 +114,7 @@ pipeline {
 
     post {
 	success {
+	    archiveArtifacts artifacts: 'goes-build/*.rom,goes-build/*.zip,goes-build/worktrees/linux/*.deb,goes-build/worktrees/linux/*.changes,goes-bmc/goes-platina-mk1-bmc,goes-boot/goes-boot,goes-example/goes-example,goes-example/goes-example-arm,goes-platina-mk1/goes-platina-mk1,vnet-platina-mk1/vnet-platina-mk1'
 	    mail body: "GOES-BUILD build ok: ${env.BUILD_URL}\n",
 		from: email_from,
 		replyTo: email_reply_to,
