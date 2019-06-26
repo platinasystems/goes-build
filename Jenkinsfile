@@ -60,7 +60,7 @@ pipeline {
 		}
 		dir('coreboot') {
 		    checkout([$class: 'GitSCM',
-			      branches: [[name: '*/master']],
+			      branches: [[name: '*/smm-debug']],
 			      doGenerateSubmoduleConfigurations: false,
 			      extensions: [[$class: 'SubmoduleOption',
 					    disableSubmodules: false,
