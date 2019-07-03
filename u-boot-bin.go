@@ -25,6 +25,10 @@ func makeUboot(ubo string) []byte {
 		fmt.Printf("Unable to read %s: %s\n", ubo, err)
 		panic(err)
 	} else {
+		if len(uboot) > ubootSize-ubootStart {
+			panic(fmt.Errorf("U-boot size of %d exceeds max %d\n",
+				len(uboot), ubootSize-ubootStart))
+		}
 		copy(ubootbin[ubootStart:], uboot)
 	}
 
