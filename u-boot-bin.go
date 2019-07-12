@@ -5,14 +5,14 @@ import (
 	"io/ioutil"
 )
 
-// File size is 512K bytes
+// File size is 768K bytes
 
 // [0] first 2 * 512 (1024) bytes unused
 // [1024] then 512 bytes from qspi-header-sclk00
 // [1536] then 5 * 512 (2560) bytes of zero
 // [4096] then U-boot
 
-const ubootSize = 512 * 1024
+const ubootSize = 768 * 1024
 
 const headerStart = 2 * 512
 

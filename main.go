@@ -365,8 +365,9 @@ func makeArmZipfile(out, name string) (err error) {
 	}
 
 	fileMaps := []filemap{
+		{in: "-ubo.bin", offset: 0x0, len: 0x80000},
+		{in: "-ubo.bin", out: "-dtb.bin", offset: 0x80000, len: 0x40000},
 		{in: "-env.bin"},
-		{in: "-ubo.bin"},
 		{in: "-ver.bin"},
 	}
 
