@@ -639,12 +639,16 @@ func (goenv *goenv) makeCpioArchive(name string) (err error) {
 		mode os.FileMode
 	}{
 		{".", 0775},
+		{"boot", 0775},
 		{"etc", 0775},
+		{"etc/goes", 0775},
 		{"etc/ssl", 0775},
 		{"etc/ssl/certs", 0775},
+		{"perm", 0775},
 		{"sbin", 0775},
 		{"usr", 0775},
 		{"usr/bin", 0775},
+		{"volatile", 0775},
 	} {
 		err = mkdirCpio(w, dir.name, dir.mode)
 		if err != nil {
@@ -663,7 +667,11 @@ func (goenv *goenv) makeCpioArchive(name string) (err error) {
 		}
 	}
 
-	if err = mkfileFromSliceCpio(w, "/etc/resolv.conf", 0644, name, []byte("nameserver 8.8.8.8\n")); err != nil {
+	if err = mkfileFromSliceCpio(w, "etc/resolv.conf", 0644, name, []byte("nameserver 8.8.8.8\n")); err != nil {
+		return
+	}
+
+	if err = mkfileFromSliceCpio(w, "etc/goes/init", 0644, name, []byte("ip link lo change up\n")); err != nil {
 		return
 	}
 
@@ -671,7 +679,7 @@ func (goenv *goenv) makeCpioArchive(name string) (err error) {
 	if err != nil {
 		return
 	}
-	if err = mkfileFromSliceCpio(w, "/usr/bin/goes", 0755, "(stripped)"+name, goesbin); err != nil {
+	if err = mkfileFromSliceCpio(w, "usr/bin/goes", 0755, "(stripped)"+name, goesbin); err != nil {
 		return
 	}
 	for _, link := range []struct {
