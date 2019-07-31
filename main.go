@@ -30,8 +30,8 @@ const (
 	platinaGoes           = platina + "/goes"
 	platinaGoesLegacy     = platina + "/goes-legacy"
 	platinaGoesLegacyMain = platinaGoesLegacy + "/main"
-
-	platinaVnetMk1 = platina + "/vnet-platina-mk1"
+	platinaSecrets        = platina + "/platina-secrets"
+	platinaVnetMk1        = platina + "/vnet-platina-mk1"
 
 	platinaSystemBuildSrc = platina + "/system-build/src"
 
@@ -651,6 +651,7 @@ func (goenv *goenv) makeCpioArchive(name string) (err error) {
 		{"boot", 0775},
 		{"etc", 0775},
 		{"etc/goes", 0775},
+		{"etc/goes/sshd", 0700},
 		{"etc/ssl", 0775},
 		{"etc/ssl/certs", 0775},
 		{"perm", 0775},
@@ -669,7 +670,10 @@ func (goenv *goenv) makeCpioArchive(name string) (err error) {
 		mode  os.FileMode
 		hname string
 	}{
-		{"etc/ssl/certs/ca-certificates.crt", 0644, "/etc/ssl/certs/ca-certificates.crt"},
+		{"etc/ssl/certs/ca-certificates.crt", 0644,
+			"/etc/ssl/certs/ca-certificates.crt"},
+		{"etc/goes/sshd/authorized_keys.default", 0600,
+			platinaSecrets + "/secrets/sshd/id_rsa.pub"},
 	} {
 		if err = mkfileFromHostCpio(w, file.tname, file.mode, file.hname); err != nil {
 			return

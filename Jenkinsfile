@@ -92,6 +92,12 @@ pipeline {
 			branch: 'master'
 		    ])
 		}
+		dir('platina-secrets') {
+		    git([
+			url: 'https://github.com/platinasystems/platina-secrets.git',
+			branch: 'master'
+		    ])
+		}
 	    }
 	}
 	stage('Build') {
