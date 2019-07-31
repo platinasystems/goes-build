@@ -18,6 +18,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/platinasystems/go-cpio"
 )
@@ -448,6 +449,14 @@ func makeArmZipfile(out, name string) (err error) {
 		}
 		armLinux.log("added", header.Name, "to", machine+".zip")
 	}
+	fh := &zip.FileHeader{Name: machine + "-v2", Modified: time.Now()}
+	_, err = zipWriter.CreateHeader(fh)
+	if err != nil {
+		os.Remove(machine + ".zip")
+		panic(err)
+	}
+	armLinux.log("added", fh.Name, "to", machine+".zip")
+
 	return nil
 }
 
