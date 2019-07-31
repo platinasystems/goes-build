@@ -94,7 +94,8 @@ pipeline {
 		}
 		dir('platina-secrets') {
 		    git([
-			url: 'https://github.com/platinasystems/platina-secrets.git',
+			url: 'git@github.com/platinasystems/platina-secrets.git',
+			credentialsId: '570701f7-c819-4db2-bd31-a0da8a452b41',
 			branch: 'master'
 		    ])
 		}
