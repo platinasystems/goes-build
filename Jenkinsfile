@@ -19,13 +19,13 @@ pipeline {
 		dir('goes') {
 		    git([
 			url: 'https://github.com/platinasystems/goes.git',
-			branch: 'master'
+			branch: 'kph-test'
 		    ])
 		}
 		dir('goes-boot') {
 		    git([
 			url: 'https://github.com/platinasystems/goes-boot.git',
-			branch: 'master'
+			branch: 'kph-test'
 		    ])
 		}
 		dir('goes-bmc') {
