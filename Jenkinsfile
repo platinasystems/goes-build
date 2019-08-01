@@ -43,7 +43,7 @@ pipeline {
 		dir('goes-build') {
 		    git([
 			url: 'https://github.com/platinasystems/goes-build.git',
-			branch: 'master'
+			branch: 'kph-test'
 		    ])
 		}
 		dir('goes-platina-mk1') {
