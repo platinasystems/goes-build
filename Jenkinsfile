@@ -19,7 +19,7 @@ pipeline {
 		dir('goes') {
 		    git([
 			url: 'https://github.com/platinasystems/goes.git',
-			branch: 'kph-test'
+			branch: 'master'
 		    ])
 		}
 		dir('goes-boot') {
@@ -60,7 +60,7 @@ pipeline {
 		}
 		dir('coreboot') {
 		    checkout([$class: 'GitSCM',
-			      branches: [[name: '*/master']],
+			      branches: [[name: '*/kph-test']],
 			      doGenerateSubmoduleConfigurations: false,
 			      extensions: [[$class: 'SubmoduleOption',
 					    disableSubmodules: false,
