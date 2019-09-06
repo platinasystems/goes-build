@@ -695,14 +695,14 @@ func (goenv *goenv) makeCpioArchive(name string) (err error) {
 	if err != nil {
 		return
 	}
-	if err = mkfileFromSliceCpio(w, "usr/bin/goes", 0755, "(stripped)"+name, goesbin); err != nil {
+	if err = mkfileFromSliceCpio(w, "init", 0755, "(stripped)"+name, goesbin); err != nil {
 		return
 	}
 	for _, link := range []struct {
 		hname string
 		tname string
 	}{
-		{"init", "/usr/bin/goes"},
+		{"usr/bin/goes", "../../init"},
 	} {
 		if err = mklinkCpio(w, link.hname, link.tname); err != nil {
 			return
