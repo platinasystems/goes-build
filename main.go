@@ -322,6 +322,9 @@ func makeArmItb(out, name string) (err error) {
 
 	cmdline := "mkimage -f goes-bmc.its " + machine + "-itb.bin"
 	err = shellCommandRun(cmdline)
+	if err != nil {
+		return
+	}
 
 	s, err := os.Stat(machine + "-itb.bin")
 	if err != nil {
