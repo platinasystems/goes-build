@@ -88,7 +88,7 @@ func getImageInfo(x int, nm string, di string, im string) {
 			panic(err)
 		}
 		defer os.Chdir(od)
-		u, err = exec.Command("git", "describe", "--abbrev=0").Output()
+		u, err = exec.Command("git", "describe").Output()
 		if err != nil {
 			fmt.Printf("In directory %s (od=%s): %s\n", di, od, err)
 			fmt.Println(u)
