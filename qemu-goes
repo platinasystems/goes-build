@@ -59,6 +59,7 @@ case "$arch" in
 	*x86*)
 		qemu=qemu-system-x86_64
 		console=ttyS0
+		M=q35
 		device=virtio-net,netdev=${USER}-${pid}
 		kvm=kvm
 		;;
@@ -71,7 +72,7 @@ netdev=user,id=${USER}-${pid},\
 hostfwd=tcp:127.0.0.1:6379-:6379,\
 hostfwd=tcp:127.0.0.1:2345-:2345,\
 hostfwd=udp:127.0.0.1:2623-:623,\
-hostfwd=tcp:127.0.0.1:2023-:23 
+hostfwd=tcp:127.0.0.1:2022-:22
 append="console=${console}"
 append="${append}${quiet:+ quiet}"
 append="${append}${IP:+ ip=}${IP}"
