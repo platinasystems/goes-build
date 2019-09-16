@@ -45,43 +45,16 @@ const (
 	platinaGoesMainGoesPlatinaMk2       = platinaGoesLegacyMain + "/goes-platina-mk2"
 	platinaGoesMainGoesPlatinaMk2Lc1Bmc = platinaGoesMainGoesPlatinaMk2 + "-lc1-bmc"
 	platinaGoesMainGoesPlatinaMk2Mc1Bmc = platinaGoesMainGoesPlatinaMk2 + "-mc1-bmc"
-
-	goesExample             = "goes-example"
-	goesExampleArm          = "goes-example-arm"
-	goesBoot                = "goes-boot"
-	goesBootArm             = "goes-boot-arm"
-	goesIP                  = "goes-ip"
-	goesIPTest              = "goes-ip.test"
-	goesPlatinaMk1          = "goes-platina-mk1"
-	goesPlatinaMk1Installer = "goes-platina-mk1-installer"
-	goesPlatinaMk1Test      = "goes-platina-mk1.test"
-	goesPlatinaMk1Bmc       = "goes-platina-mk1-bmc"
-	goesPlatinaMk2Lc1Bmc    = "goes-platina-mk2-lc1-bmc"
-	goesPlatinaMk2Mc1Bmc    = "goes-platina-mk2-mc1-bmc"
-
-	corebootExampleAmd64        = "coreboot-example-amd64"
-	corebootExampleAmd64Config  = "example-amd64_defconfig"
-	corebootExampleAmd64Machine = "example-amd64"
-	corebootExampleAmd64Rom     = "coreboot-example-amd64.rom"
-	corebootPlatinaMk1          = "coreboot-platina-mk1"
-	corebootPlatinaMk1Config    = "platina-mk1_defconfig"
-	corebootPlatinaMk1Machine   = "platina-mk1"
-	corebootPlatinaMk1Rom       = "coreboot-platina-mk1.rom"
-
-	exampleAmd64Vmlinuz     = "example-amd64.vmlinuz"
-	platinaMk1Vmlinuz       = "platina-mk1.vmlinuz"
-	platinaMk1BmcVmlinuz    = "platina-mk1-bmc.vmlinuz"
-	platinaMk2Lc1BmcVmlinuz = "platina-mk2-lc1-bmc.vmlinuz"
-	platinaMk2Mc1BmcVmlinuz = "platina-mk2-mc1-bmc.vmlinuz"
-
-	itbPlatinaMk1Bmc = "platina-mk1-bmc.itb"
-
-	ubootPlatinaMk1Bmc = "u-boot-platina-mk1-bmc"
-
-	vnetPlatinaMk1 = "vnet-platina-mk1"
-
-	zipPlatinaMk1Bmc = "platina-mk1-bmc.zip"
 )
+
+type target struct {
+	name  string
+	maker func(tg *target) error
+	main  string
+	dir   string
+	def   bool
+	built bool
+}
 
 type goenv struct {
 	goarch           string
@@ -97,23 +70,6 @@ type goenv struct {
 }
 
 var (
-	defaultTargets = []string{
-		goesExample,
-		exampleAmd64Vmlinuz,
-		corebootExampleAmd64,
-		goesExampleArm,
-		goesBoot,
-		goesPlatinaMk1,
-		vnetPlatinaMk1,
-		platinaMk1Vmlinuz,
-		corebootPlatinaMk1,
-		goesPlatinaMk1Bmc,
-		platinaMk1BmcVmlinuz,
-		ubootPlatinaMk1Bmc,
-		corebootExampleAmd64Rom,
-		corebootPlatinaMk1Rom,
-		zipPlatinaMk1Bmc,
-	}
 	goarchFlag = flag.String("goarch", runtime.GOARCH,
 		"GOARCH of PACKAGE build")
 	goosFlag = flag.String("goos", runtime.GOOS,
@@ -161,116 +117,292 @@ diag	include manufacturing diagnostics with BMC
 		cpioSuffix:       ".cpio.xz",
 		cpioTrimPrefix:   "goes-",
 	}
-	mainPkg = map[string]string{
-		goesExample:             platinaGoesMainGoesExample,
-		exampleAmd64Vmlinuz:     "platina-example-amd64_defconfig",
-		corebootExampleAmd64:    corebootExampleAmd64Config,
-		corebootExampleAmd64Rom: corebootExampleAmd64Machine,
-		goesExampleArm:          platinaGoesMainGoesExample,
-		goesBoot:                platinaGoesMainGoesBoot,
-		goesBootArm:             platinaGoesMainGoesBoot,
-		goesIP:                  platinaGoesMainIP,
-		goesIPTest:              platinaGoesMainIP,
-		goesPlatinaMk1:          platinaGoesMainGoesPlatinaMk1,
-		vnetPlatinaMk1:          platinaVnetMk1,
-		platinaMk1Vmlinuz:       "platina-mk1_defconfig",
-		corebootPlatinaMk1:      corebootPlatinaMk1Config,
-		corebootPlatinaMk1Rom:   corebootPlatinaMk1Machine,
-		goesPlatinaMk1Test:      platinaGoesMainGoesPlatinaMk1,
-		goesPlatinaMk1Installer: platinaGoesMainGoesPlatinaMk1,
-		goesPlatinaMk1Bmc:       platinaGoesMainGoesPlatinaMk1Bmc,
-		platinaMk1BmcVmlinuz:    "platina-mk1-bmc_defconfig",
-		ubootPlatinaMk1Bmc:      "platinamx6boards_qspi_defconfig",
-		goesPlatinaMk2Lc1Bmc:    platinaGoesMainGoesPlatinaMk2Lc1Bmc,
-		platinaMk2Lc1BmcVmlinuz: "platina-mk2-lc1-bmc_defconfig",
-		goesPlatinaMk2Mc1Bmc:    platinaGoesMainGoesPlatinaMk2Mc1Bmc,
-		platinaMk2Mc1BmcVmlinuz: "platina-mk2-mc1-bmc_defconfig",
-		itbPlatinaMk1Bmc:        "platina-mk1-bmc.its",
-	}
-	makeFun map[string]func(out, name string) error
-	pkgdir  = map[string]string{
-		goesBoot:          "../goes-boot",
-		goesBootArm:       "../goes-boot",
-		goesPlatinaMk1:    "../goes-platina-mk1",
-		goesPlatinaMk1Bmc: "../goes-bmc",
-		goesExample:       "../goes-example",
-		goesExampleArm:    "../goes-example",
-		vnetPlatinaMk1:    "../vnet-platina-mk1",
-	}
-	pkgbuilt = map[string]bool{}
+
+	corebootExampleAmd64Config  = "example-amd64_defconfig"
+	corebootExampleAmd64Machine = "example-amd64"
+
+	corebootPlatinaMk1Config  = "platina-mk1_defconfig"
+	corebootPlatinaMk1Machine = "platina-mk1"
+
+	corebootExampleAmd64    *target
+	corebootExampleAmd64Rom *target
+	corebootPlatinaMk1      *target
+	corebootPlatinaMk1Rom   *target
+	exampleAmd64Vmlinuz     *target
+	goesBoot                *target
+	goesBootArm             *target
+	goesExample             *target
+	goesExampleArm          *target
+	goesIP                  *target
+	goesIPTest              *target
+	goesPlatinaMk1          *target
+	goesPlatinaMk1Bmc       *target
+	goesPlatinaMk1Installer *target
+	goesPlatinaMk1Test      *target
+	goesPlatinaMk2Lc1Bmc    *target
+	goesPlatinaMk2Mc1Bmc    *target
+	itbPlatinaMk1Bmc        *target
+	platinaMk1BmcVmlinuz    *target
+	platinaMk1Vmlinuz       *target
+	platinaMk2Lc1BmcVmlinuz *target
+	platinaMk2Mc1BmcVmlinuz *target
+	ubootPlatinaMk1Bmc      *target
+	vnetPlatinaMk1          *target
+	zipPlatinaMk1Bmc        *target
+
+	targets   = []*target{}
+	targetMap = map[string]*target{}
 )
 
 func init() {
 	flag.Usage = usage
-	makeFun = map[string]func(out, name string) error{
-		goesExample:             makeHost,
-		exampleAmd64Vmlinuz:     makeAmd64LinuxKernel,
-		corebootExampleAmd64:    makeAmd64Boot,
-		corebootExampleAmd64Rom: makeAmd64CorebootRom,
-		goesExampleArm:          makeArmLinuxStatic,
-		goesBoot:                makeAmd64LinuxInitramfs,
-		goesBootArm:             makeArmLinuxInitramfs,
-		goesIP:                  makeHost,
-		goesIPTest:              makeHostTest,
-		goesPlatinaMk1:          makeGoesPlatinaMk1,
-		vnetPlatinaMk1:          makeAmd64LinuxStatic,
-		platinaMk1Vmlinuz:       makeAmd64LinuxKernel,
-		corebootPlatinaMk1:      makeAmd64Boot,
-		corebootPlatinaMk1Rom:   makeAmd64CorebootRom,
-		goesPlatinaMk1Installer: makeGoesPlatinaMk1Installer,
-		goesPlatinaMk1Test:      makeAmd64LinuxTest,
-		goesPlatinaMk1Bmc:       makeArmLinuxInitramfs,
-		platinaMk1BmcVmlinuz:    makeArmLinuxKernel,
-		ubootPlatinaMk1Bmc:      makeArmBoot,
-		goesPlatinaMk2Lc1Bmc:    makeArmLinuxStatic,
-		platinaMk2Lc1BmcVmlinuz: makeArmLinuxKernel,
-		goesPlatinaMk2Mc1Bmc:    makeArmLinuxStatic,
-		platinaMk2Mc1BmcVmlinuz: makeArmLinuxKernel,
-		zipPlatinaMk1Bmc:        makeArmZipfile,
-		itbPlatinaMk1Bmc:        makeArmItb,
+
+	corebootExampleAmd64 = &target{
+		name:  "coreboot-example-amd64",
+		maker: makeAmd64Boot,
+		main:  corebootExampleAmd64Config,
+	}
+
+	corebootExampleAmd64Rom = &target{
+		name:  "coreboot-example-amd64.rom",
+		maker: makeAmd64CorebootRom,
+		main:  corebootExampleAmd64Machine,
+		def:   true,
+	}
+
+	corebootPlatinaMk1 = &target{
+		name:  "coreboot-platina-mk1",
+		maker: makeAmd64Boot,
+		main:  corebootPlatinaMk1Config,
+	}
+
+	corebootPlatinaMk1Rom = &target{
+		name:  "coreboot-platina-mk1.rom",
+		maker: makeAmd64CorebootRom,
+		main:  corebootPlatinaMk1Machine,
+		def:   true,
+	}
+
+	exampleAmd64Vmlinuz = &target{
+		name:  "example-amd64.vmlinuz",
+		maker: makeAmd64LinuxKernel,
+		main:  "platina-example-amd64_defconfig",
+		def:   true,
+	}
+
+	goesBoot = &target{
+		name:  "goes-boot",
+		maker: makeAmd64LinuxInitramfs,
+		main:  platinaGoesMainGoesBoot,
+		dir:   "../goes-boot",
+	}
+
+	goesBootArm = &target{
+		name:  "goes-boot-arm",
+		maker: makeArmLinuxInitramfs,
+		main:  platinaGoesMainGoesBoot,
+		dir:   "../goes-boot",
+	}
+
+	goesExample = &target{
+		name:  "goes-example",
+		maker: makeHost,
+		main:  platinaGoesMainGoesExample,
+		dir:   "../goes-example",
+		def:   true,
+	}
+
+	goesExampleArm = &target{
+		name:  "goes-example-arm",
+		maker: makeArmLinuxStatic,
+		main:  platinaGoesMainGoesExample,
+		dir:   "../goes-example",
+		def:   true,
+	}
+
+	goesIP = &target{
+		name:  "goes-ip",
+		maker: makeHost,
+		main:  platinaGoesMainIP,
+	}
+
+	goesIPTest = &target{
+		name:  "goes-ip.test",
+		maker: makeHostTest,
+		main:  platinaGoesMainIP,
+	}
+
+	goesPlatinaMk1 = &target{
+		name:  "goes-platina-mk1",
+		maker: makeGoesPlatinaMk1,
+		main:  platinaGoesMainGoesPlatinaMk1,
+		dir:   "../goes-platina-mk1",
+		def:   true,
+	}
+
+	goesPlatinaMk1Bmc = &target{
+		name:  "goes-platina-mk1-bmc",
+		maker: makeArmLinuxInitramfs,
+		main:  platinaGoesMainGoesPlatinaMk1Bmc,
+		dir:   "../goes-bmc",
+	}
+
+	goesPlatinaMk1Installer = &target{
+		name:  "goes-platina-mk1-installer",
+		maker: makeGoesPlatinaMk1Installer,
+		main:  platinaGoesMainGoesPlatinaMk1,
+	}
+
+	goesPlatinaMk1Test = &target{
+		name:  "goes-platina-mk1.test",
+		maker: makeAmd64LinuxTest,
+		main:  platinaGoesMainGoesPlatinaMk1,
+	}
+
+	goesPlatinaMk2Lc1Bmc = &target{
+		name:  "goes-platina-mk2-lc1-bmc",
+		maker: makeArmLinuxStatic,
+		main:  platinaGoesMainGoesPlatinaMk2Lc1Bmc,
+	}
+
+	goesPlatinaMk2Mc1Bmc = &target{
+		name:  "goes-platina-mk2-mc1-bmc",
+		maker: makeArmLinuxStatic,
+		main:  platinaGoesMainGoesPlatinaMk2Mc1Bmc,
+	}
+
+	itbPlatinaMk1Bmc = &target{
+		name:  "platina-mk1-bmc.itb",
+		maker: makeArmItb,
+		main:  "platina-mk1-bmc.its",
+	}
+
+	platinaMk1BmcVmlinuz = &target{
+		name:  "platina-mk1-bmc.vmlinuz",
+		maker: makeArmLinuxKernel,
+		main:  "platina-mk1-bmc_defconfig",
+	}
+
+	platinaMk1Vmlinuz = &target{
+		name:  "platina-mk1.vmlinuz",
+		maker: makeAmd64LinuxKernel,
+		main:  "platina-mk1_defconfig",
+	}
+
+	platinaMk2Lc1BmcVmlinuz = &target{
+		name:  "platina-mk2-lc1-bmc.vmlinuz",
+		maker: makeArmLinuxKernel,
+		main:  "platina-mk2-lc1-bmc_defconfig",
+	}
+
+	platinaMk2Mc1BmcVmlinuz = &target{
+		name:  "platina-mk2-mc1-bmc.vmlinuz",
+		maker: makeArmLinuxKernel,
+		main:  "platina-mk2-mc1-bmc_defconfig",
+	}
+
+	ubootPlatinaMk1Bmc = &target{
+		name:  "u-boot-platina-mk1-bmc",
+		maker: makeArmBoot,
+		main:  "platinamx6boards_qspi_defconfig",
+	}
+
+	vnetPlatinaMk1 = &target{
+		name:  "vnet-platina-mk1",
+		maker: makeAmd64LinuxStatic,
+		main:  platinaVnetMk1,
+		dir:   "../vnet-platina-mk1",
+		def:   true,
+	}
+
+	zipPlatinaMk1Bmc = &target{
+		name:  "platina-mk1-bmc.zip",
+		maker: makeArmZipfile,
+		def:   true,
+	}
+
+	targets = []*target{
+		corebootExampleAmd64,
+		corebootExampleAmd64Rom,
+		corebootPlatinaMk1,
+		corebootPlatinaMk1Rom,
+		exampleAmd64Vmlinuz,
+		goesBoot,
+		goesBootArm,
+		goesExample,
+		goesExampleArm,
+		goesIP,
+		goesIPTest,
+		goesPlatinaMk1,
+		goesPlatinaMk1Bmc,
+		goesPlatinaMk1Installer,
+		goesPlatinaMk1Test,
+		goesPlatinaMk2Lc1Bmc,
+		goesPlatinaMk2Mc1Bmc,
+		itbPlatinaMk1Bmc,
+		platinaMk1BmcVmlinuz,
+		platinaMk1Vmlinuz,
+		platinaMk2Lc1BmcVmlinuz,
+		platinaMk2Mc1BmcVmlinuz,
+		ubootPlatinaMk1Bmc,
+		vnetPlatinaMk1,
+		zipPlatinaMk1Bmc,
+	}
+	for _, t := range targets {
+		if _, p := targetMap[t.name]; p {
+			panic("Duplicate target " + t.name)
+		}
+		targetMap[t.name] = t
 	}
 }
 
 func makeDependent(target string) {
-	if pkgbuilt[target] {
-		fmt.Printf("# Dependent package %s already built\n", target)
-		return
+	if tg, p := targetMap[target]; p {
+		if tg.built {
+			fmt.Printf("# Dependent package %s already built\n", target)
+			return
+		}
+		fmt.Printf("# Making dependent package %s\n", target)
+		makeTarget(tg)
+	} else {
+		panic("Unknown dependent package " + target)
 	}
-	fmt.Printf("# Making dependent package %s\n", target)
-	makeTarget(target)
 }
 
-func makeTarget(target string) {
-	var err error
-	if pkgbuilt[target] {
-		fmt.Printf("# Package %s already built\n", target)
+func makeTarget(tg *target) {
+	if tg.built {
+		fmt.Printf("# Package %s already built\n", tg.name)
 		return
 	}
-	if f, found := makeFun[target]; found {
-		err = f(target, mainPkg[target])
-	} else {
-		err = makePackage(target)
-	}
+	err := tg.maker(tg)
 	if err != nil {
-		fmt.Printf("Error making package %s\n", target)
+		fmt.Printf("Error making package %s\n", tg.name)
 		panic(err)
 	}
-	pkgbuilt[target] = true
+	tg.built = true
 }
 
 func main() {
 	flag.Parse()
-	targets := flag.Args()
-	if len(targets) == 0 {
-		targets = defaultTargets
-	} else if targets[0] == "all" {
-		targets = targets[:0]
-		for target := range makeFun {
-			targets = append(targets, target)
+	targetsReq := flag.Args()
+	if len(targetsReq) == 0 {
+		for _, t := range targets {
+			if t.def {
+				targetsReq = append(targetsReq, t.name)
+			}
+		}
+	} else if targetsReq[0] == "all" {
+		targetsReq = targetsReq[:0]
+		for _, t := range targets {
+			targetsReq = append(targetsReq, t.name)
 		}
 	}
-	for _, target := range targets {
-		makeTarget(target)
+	for _, t := range targetsReq {
+		if tg, p := targetMap[t]; p {
+			makeTarget(tg)
+		} else {
+			panic("Unknown target " + t)
+		}
 	}
 }
 
@@ -280,23 +412,25 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "\nOptions:")
 	flag.PrintDefaults()
 	fmt.Fprintln(os.Stderr, "\nDefault Targets:")
-	for _, target := range defaultTargets {
-		fmt.Fprint(os.Stderr, "\t", target, "\n")
+	for _, t := range targets {
+		if t.def {
+			fmt.Fprint(os.Stderr, "\t", t.name, "\n")
+		}
 	}
 	fmt.Fprintln(os.Stderr, "\n\"all\" Targets:")
-	for target := range makeFun {
-		fmt.Fprint(os.Stderr, "\t", target, "\n")
+	for _, t := range targets {
+		fmt.Fprint(os.Stderr, "\t", t.name, "\n")
 	}
 }
 
-func makeArmLinuxStatic(out, name string) error {
-	return armLinux.godoforpkg(out, "build", "-o", out, "-tags", "netgo",
-		"-ldflags", "-d", name)
+func makeArmLinuxStatic(tg *target) error {
+	return armLinux.godoforpkg(tg, "build", "-o", tg.name, "-tags", "netgo",
+		"-ldflags", "-d", tg.main)
 }
 
-func makeArmBoot(out, name string) (err error) {
-	machine := strings.TrimPrefix(out, "u-boot-")
-	if err = armLinux.makeboot(out, "make "+name); err != nil {
+func makeArmBoot(tg *target) (err error) {
+	machine := strings.TrimPrefix(tg.name, "u-boot-")
+	if err = armLinux.makeboot(tg.name, "make "+tg.main); err != nil {
 		return err
 	}
 	env, err := makeUbootEnv()
@@ -314,10 +448,10 @@ func makeArmBoot(out, name string) (err error) {
 	return nil
 }
 
-func makeArmItb(out, name string) (err error) {
-	machine := strings.TrimSuffix(out, ".itb")
+func makeArmItb(tg *target) (err error) {
+	machine := strings.TrimSuffix(tg.name, ".itb")
 
-	makeDependent(goesPlatinaMk1Bmc)
+	makeDependent(goesPlatinaMk1Bmc.name)
 	makeDependent(machine + ".vmlinuz")
 
 	cmdline := "mkimage -f goes-bmc.its " + machine + "-itb.bin"
@@ -343,11 +477,11 @@ func makeArmItb(out, name string) (err error) {
 	return
 }
 
-func makeArmZipfile(out, name string) (err error) {
-	machine := strings.TrimSuffix(out, ".zip")
+func makeArmZipfile(tg *target) (err error) {
+	machine := strings.TrimSuffix(tg.name, ".zip")
 
 	makeDependent("u-boot-" + machine)
-	makeDependent(goesPlatinaMk1Bmc)
+	makeDependent(goesPlatinaMk1Bmc.name)
 	makeDependent(machine + ".vmlinuz")
 	makeDependent(machine + ".itb")
 
@@ -463,9 +597,9 @@ func makeArmZipfile(out, name string) (err error) {
 	return nil
 }
 
-func makeArmLinuxKernel(out, name string) (err error) {
-	machine := strings.TrimSuffix(out, ".vmlinuz")
-	err = armLinux.makeLinux(out, name)
+func makeArmLinuxKernel(tg *target) (err error) {
+	machine := strings.TrimSuffix(tg.name, ".vmlinuz")
+	err = armLinux.makeLinux(tg.name, tg.main)
 	if err != nil {
 		return
 	}
@@ -477,103 +611,98 @@ func makeArmLinuxKernel(out, name string) (err error) {
 	return
 }
 
-func makeArmLinuxInitramfs(out, name string) (err error) {
-	machine := strings.TrimPrefix(out, "goes-")
+func makeArmLinuxInitramfs(tg *target) (err error) {
+	machine := strings.TrimPrefix(tg.name, "goes-")
 	machine = strings.TrimSuffix(machine, ".cpio.xz")
-	err = makeArmLinuxStatic(out, name)
+	err = makeArmLinuxStatic(tg)
 	if err != nil {
 		return
 	}
-	err = armLinux.makeCpioArchive(out)
+	err = armLinux.makeCpioArchive(tg)
 
 	return
 }
 
-func makeAmd64Boot(out, name string) (err error) {
-	return amd64Linux.makeboot(out, "MAKEINFO=missing make crossgcc-i386 && make "+name)
+func makeAmd64Boot(tg *target) (err error) {
+	return amd64Linux.makeboot(tg.name, "MAKEINFO=missing make crossgcc-i386 && make "+tg.main)
 }
 
-func makeAmd64Linux(out, name string) error {
-	return amd64Linux.godoforpkg(out, "build", "-o", out, name)
+func makeAmd64Linux(tg *target) error {
+	return amd64Linux.godoforpkg(tg, "build", "-o", tg.name, tg.main)
 }
 
-func makeAmd64LinuxStatic(out, name string) error {
-	return amd64Linux.godoforpkg(out, "build", "-o", out, "-tags", "netgo", name)
+func makeAmd64LinuxStatic(tg *target) error {
+	return amd64Linux.godoforpkg(tg, "build", "-o", tg.name, "-tags", "netgo", tg.main)
 }
 
-func makeAmd64LinuxTest(out, name string) error {
-	return amd64Linux.godoforpkg(out, "test", "-c", "-o", out, name)
+func makeAmd64LinuxTest(tg *target) error {
+	return amd64Linux.godoforpkg(tg, "test", "-c", "-o", tg.name, tg.main)
 }
 
-func makeAmd64CorebootRom(romfile, machine string) (err error) {
-	makeDependent("coreboot-" + machine)
-	makeDependent(machine + ".vmlinuz")
-	makeDependent(goesBoot)
+func makeAmd64CorebootRom(tg *target) (err error) {
+	makeDependent("coreboot-" + tg.main)
+	makeDependent(tg.main + ".vmlinuz")
+	makeDependent(goesBoot.name)
 
-	dir := "worktrees/coreboot/" + machine
+	dir := "worktrees/coreboot/" + tg.main
 	build := dir + "/build"
 	cbfstool := build + "/cbfstool"
-	tmprom := romfile + ".tmp"
+	tmprom := tg.name + ".tmp"
 
 	cmdline := "cp " + build + "/coreboot.rom " + tmprom +
 		" && " + cbfstool + " " + tmprom + " add-payload" +
-		" -f " + machine + ".vmlinuz" +
+		" -f " + tg.main + ".vmlinuz" +
 		" -I goes-boot.cpio.xz" +
 		` -C "console=ttyS0,115200n8 intel_iommu=off quiet"` +
 		" -n fallback/payload -c none -r COREBOOT" +
-		" && mv " + tmprom + " " + romfile +
-		" && " + cbfstool + " " + romfile + " print"
+		" && mv " + tmprom + " " + tg.name +
+		" && " + cbfstool + " " + tg.name + " print"
 	if err := shellCommandRun(cmdline); err != nil {
 		return err
 	}
 	return
 }
 
-func makeAmd64LinuxKernel(out, name string) (err error) {
-	return amd64Linux.makeLinux(out, name)
+func makeAmd64LinuxKernel(tg *target) (err error) {
+	return amd64Linux.makeLinux(tg.name, tg.main)
 }
 
-func makeAmd64LinuxInitramfs(out, name string) (err error) {
-	err = makeAmd64LinuxStatic(out, name)
+func makeAmd64LinuxInitramfs(tg *target) (err error) {
+	err = makeAmd64LinuxStatic(tg)
 	if err != nil {
 		return
 	}
-	return amd64Linux.makeCpioArchive(out)
+	return amd64Linux.makeCpioArchive(tg)
 }
 
-func makeHost(out, name string) error {
-	return host.godoforpkg(out, "build", "-o", out, name)
+func makeHost(tg *target) error {
+	return host.godoforpkg(tg, "build", "-o", tg.name, tg.main)
 }
 
-func makeHostTest(out, name string) error {
-	return host.godoforpkg(out, "test", "-c", "-o", out, name)
+func makeHostTest(tg *target) error {
+	return host.godoforpkg(tg, "test", "-c", "-o", tg.name, tg.main)
 }
 
-func makePackage(name string) error {
-	args := []string{"build"}
-	if len(*oFlag) > 0 {
-		args = append(args, "-o", *oFlag)
-	}
-	return (&goenv{goarch: *goarchFlag, goos: *goosFlag}).godo(append(args, name)...)
-}
-
-func makeGoesPlatinaMk1(out, name string) error {
+func makeGoesPlatinaMk1(tg *target) error {
 	args := []string{}
 	if strings.Index(*tagsFlag, "debug") >= 0 {
 		args = append(args, "-gcflags", "-N -l")
 	}
-	return amd64Linux.godoforpkg(out, append(append([]string{"build", "-o", out}, args...), name)...)
+	return amd64Linux.godoforpkg(goesPlatinaMk1,
+		append(append([]string{"build", "-o",
+			goesPlatinaMk1.name},
+			args...), goesPlatinaMk1.dir)...)
 }
 
-func makeGoesPlatinaMk1Installer(out, name string) error {
+func makeGoesPlatinaMk1Installer(tg *target) error {
 	var zfiles []string
-	tinstaller := out + ".tmp"
-	tzip := goesPlatinaMk1 + ".zip"
-	err := makeGoesPlatinaMk1(goesPlatinaMk1, name)
+	tinstaller := tg.name + ".tmp"
+	tzip := goesPlatinaMk1.name + ".zip"
+	err := makeGoesPlatinaMk1(tg)
 	if err != nil {
 		return err
 	}
-	err = amd64Linux.godoforpkg(out, "build", "-o", tinstaller,
+	err = amd64Linux.godoforpkg(tg, "build", "-o", tinstaller,
 		platinaGoesMainGoesInstaller)
 	if err != nil {
 		return err
@@ -585,28 +714,28 @@ func makeGoesPlatinaMk1Installer(out, name string) error {
 	}
 	zfiles = append(zfiles, fi.Name())
 
-	err = zipfile(tzip, append(zfiles, goesPlatinaMk1))
+	err = zipfile(tzip, append(zfiles, goesPlatinaMk1.name))
 	if err != nil {
 		return err
 	}
-	err = catto(out, tinstaller, tzip)
+	err = catto(tg.name, tinstaller, tzip)
 	if err != nil {
 		return err
 	}
 	if err = rm(tinstaller, tzip); err != nil {
 		return err
 	}
-	if err = zipa(out); err != nil {
+	if err = zipa(tg.name); err != nil {
 		return err
 	}
-	return chmodx(out)
+	return chmodx(tg.name)
 }
 
-func (goenv *goenv) makeCpioArchive(name string) (err error) {
+func (goenv *goenv) makeCpioArchive(tg *target) (err error) {
 	if *nFlag {
 		return nil
 	}
-	arname := strings.TrimPrefix(name+goenv.cpioSuffix,
+	arname := strings.TrimPrefix(tg.name+goenv.cpioSuffix,
 		goenv.cpioTrimPrefix)
 	f, err := os.Create(arname + ".tmp")
 	if err != nil {
@@ -683,19 +812,19 @@ func (goenv *goenv) makeCpioArchive(name string) (err error) {
 		}
 	}
 
-	if err = mkfileFromSliceCpio(w, "etc/resolv.conf", 0644, name, []byte("nameserver 8.8.8.8\n")); err != nil {
+	if err = mkfileFromSliceCpio(w, "etc/resolv.conf", 0644, tg.name, []byte("nameserver 8.8.8.8\n")); err != nil {
 		return
 	}
 
-	if err = mkfileFromSliceCpio(w, "etc/goes/init", 0644, name, []byte("ip link lo change up\n")); err != nil {
+	if err = mkfileFromSliceCpio(w, "etc/goes/init", 0644, tg.name, []byte("ip link lo change up\n")); err != nil {
 		return
 	}
 
-	goesbin, err := goenv.stripBinary(pkgdir[name] + "/" + name)
+	goesbin, err := goenv.stripBinary(tg.dir + "/" + tg.name)
 	if err != nil {
 		return
 	}
-	if err = mkfileFromSliceCpio(w, "init", 0755, "(stripped)"+name, goesbin); err != nil {
+	if err = mkfileFromSliceCpio(w, "init", 0755, "(stripped)"+tg.name, goesbin); err != nil {
 		return
 	}
 	for _, link := range []struct {
@@ -803,8 +932,8 @@ func (goenv *goenv) godo(args ...string) error {
 	return goenv.godoindir(platinaGoes, args...)
 }
 
-func (goenv *goenv) godoforpkg(pkg string, args ...string) error {
-	dir := pkgdir[pkg]
+func (goenv *goenv) godoforpkg(tg *target, args ...string) error {
+	dir := tg.dir
 	if dir == "" {
 		dir = platinaGoes // legacy packages
 	}
