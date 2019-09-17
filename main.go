@@ -17,6 +17,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -48,12 +49,13 @@ const (
 )
 
 type target struct {
-	name  string
-	maker func(tg *target) error
-	main  string
-	dir   string
-	def   bool
-	built bool
+	name         string
+	maker        func(tg *target) error
+	main         string
+	dir          string
+	def          bool
+	dependencies []*target
+	once         sync.Once
 }
 
 type goenv struct {
@@ -150,8 +152,8 @@ diag	include manufacturing diagnostics with BMC
 	vnetPlatinaMk1          *target
 	zipPlatinaMk1Bmc        *target
 
-	targets   = []*target{}
-	targetMap = map[string]*target{}
+	allTargets = []*target{}
+	targetMap  = map[string]*target{}
 )
 
 func init() {
@@ -321,7 +323,35 @@ func init() {
 		def:   true,
 	}
 
-	targets = []*target{
+	// Set up dependencies. We have to do this after we have set up all
+	// of the targets, since we need the pointer to the target already
+	// set up.
+
+	corebootExampleAmd64Rom.dependencies = []*target{
+		corebootExampleAmd64,
+		exampleAmd64Vmlinuz,
+		goesBoot,
+	}
+
+	corebootPlatinaMk1Rom.dependencies = []*target{
+		corebootPlatinaMk1,
+		platinaMk1Vmlinuz,
+		goesBoot,
+	}
+
+	itbPlatinaMk1Bmc.dependencies = []*target{
+		goesPlatinaMk1Bmc,
+		platinaMk1BmcVmlinuz,
+	}
+
+	zipPlatinaMk1Bmc.dependencies = []*target{
+		itbPlatinaMk1Bmc,
+		ubootPlatinaMk1Bmc,
+	}
+
+	// Set up the list of targets
+
+	allTargets = []*target{
 		corebootExampleAmd64,
 		corebootExampleAmd64Rom,
 		corebootPlatinaMk1,
@@ -348,7 +378,7 @@ func init() {
 		vnetPlatinaMk1,
 		zipPlatinaMk1Bmc,
 	}
-	for _, t := range targets {
+	for _, t := range allTargets {
 		if _, p := targetMap[t.name]; p {
 			panic("Duplicate target " + t.name)
 		}
@@ -356,54 +386,54 @@ func init() {
 	}
 }
 
-func makeDependent(target string) {
-	if tg, p := targetMap[target]; p {
-		if tg.built {
-			fmt.Printf("# Dependent package %s already built\n", target)
-			return
-		}
-		fmt.Printf("# Making dependent package %s\n", target)
-		makeTarget(tg)
-	} else {
-		panic("Unknown dependent package " + target)
-	}
-}
+func makeTargets(parent string, targets []*target) {
+	for _, tg := range targets {
+		tg.once.Do(func() {
+			if parent == "" {
+				fmt.Printf("# Making Package %s\n", tg.name)
+			} else {
+				fmt.Printf("# Making dependent package %s for %s\n",
+					tg.name, parent)
+			}
+			makeTargets(tg.name, tg.dependencies)
 
-func makeTarget(tg *target) {
-	if tg.built {
-		fmt.Printf("# Package %s already built\n", tg.name)
-		return
+			err := tg.maker(tg)
+			if err != nil {
+				fmt.Printf("Error making package %s\n", tg.name)
+				panic(err)
+			}
+			if parent == "" {
+				fmt.Printf("# Done making Package %s\n", tg.name)
+			} else {
+				fmt.Printf("# Done making dependent package %s for %s\n",
+					tg.name, parent)
+			}
+		})
 	}
-	err := tg.maker(tg)
-	if err != nil {
-		fmt.Printf("Error making package %s\n", tg.name)
-		panic(err)
-	}
-	tg.built = true
 }
 
 func main() {
 	flag.Parse()
 	targetsReq := flag.Args()
+	tgs := make([]*target, 0)
 	if len(targetsReq) == 0 {
-		for _, t := range targets {
+		for _, t := range allTargets {
 			if t.def {
-				targetsReq = append(targetsReq, t.name)
+				tgs = append(tgs, t)
 			}
 		}
 	} else if targetsReq[0] == "all" {
-		targetsReq = targetsReq[:0]
-		for _, t := range targets {
-			targetsReq = append(targetsReq, t.name)
+		tgs = allTargets
+	} else {
+		for _, t := range targetsReq {
+			if tg, p := targetMap[t]; p {
+				tgs = append(tgs, tg)
+			} else {
+				panic("Unknown target " + t)
+			}
 		}
 	}
-	for _, t := range targetsReq {
-		if tg, p := targetMap[t]; p {
-			makeTarget(tg)
-		} else {
-			panic("Unknown target " + t)
-		}
-	}
+	makeTargets("", tgs)
 }
 
 func usage() {
@@ -412,13 +442,13 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "\nOptions:")
 	flag.PrintDefaults()
 	fmt.Fprintln(os.Stderr, "\nDefault Targets:")
-	for _, t := range targets {
+	for _, t := range allTargets {
 		if t.def {
 			fmt.Fprint(os.Stderr, "\t", t.name, "\n")
 		}
 	}
 	fmt.Fprintln(os.Stderr, "\n\"all\" Targets:")
-	for _, t := range targets {
+	for _, t := range allTargets {
 		fmt.Fprint(os.Stderr, "\t", t.name, "\n")
 	}
 }
@@ -451,9 +481,6 @@ func makeArmBoot(tg *target) (err error) {
 func makeArmItb(tg *target) (err error) {
 	machine := strings.TrimSuffix(tg.name, ".itb")
 
-	makeDependent(goesPlatinaMk1Bmc.name)
-	makeDependent(machine + ".vmlinuz")
-
 	cmdline := "mkimage -f goes-bmc.its " + machine + "-itb.bin"
 	err = shellCommandRun(cmdline)
 	if err != nil {
@@ -479,11 +506,6 @@ func makeArmItb(tg *target) (err error) {
 
 func makeArmZipfile(tg *target) (err error) {
 	machine := strings.TrimSuffix(tg.name, ".zip")
-
-	makeDependent("u-boot-" + machine)
-	makeDependent(goesPlatinaMk1Bmc.name)
-	makeDependent(machine + ".vmlinuz")
-	makeDependent(machine + ".itb")
 
 	makeVer("rel") // FIXME
 
@@ -640,10 +662,6 @@ func makeAmd64LinuxTest(tg *target) error {
 }
 
 func makeAmd64CorebootRom(tg *target) (err error) {
-	makeDependent("coreboot-" + tg.main)
-	makeDependent(tg.main + ".vmlinuz")
-	makeDependent(goesBoot.name)
-
 	dir := "worktrees/coreboot/" + tg.main
 	build := dir + "/build"
 	cbfstool := build + "/cbfstool"
