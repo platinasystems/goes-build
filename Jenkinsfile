@@ -52,6 +52,12 @@ pipeline {
 			branch: 'master'
 		    ])
 		}
+		dir('goes-recovery') {
+		    git([
+			url: 'https://github.com/platinasystems/goes-recovery.git',
+			branch: 'master'
+		    ])
+		}
 		dir('vnet-platina-mk1') {
 		    git([
 			url: 'https://github.com/platinasystems/vnet-platina-mk1.git',
