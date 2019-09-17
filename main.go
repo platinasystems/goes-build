@@ -387,6 +387,8 @@ func init() {
 }
 
 func makeTargets(parent string, targets []*target) {
+	var wg sync.WaitGroup
+
 	for _, tg := range targets {
 		tg.once.Do(func() {
 			if parent == "" {
@@ -397,19 +399,24 @@ func makeTargets(parent string, targets []*target) {
 			}
 			makeTargets(tg.name, tg.dependencies)
 
-			err := tg.maker(tg)
-			if err != nil {
-				fmt.Printf("Error making package %s\n", tg.name)
-				panic(err)
-			}
-			if parent == "" {
-				fmt.Printf("# Done making Package %s\n", tg.name)
-			} else {
-				fmt.Printf("# Done making dependent package %s for %s\n",
-					tg.name, parent)
-			}
+			wg.Add(1)
+			go func(tg *target, wg *sync.WaitGroup) {
+				err := tg.maker(tg)
+				if err != nil {
+					fmt.Printf("Error making package %s\n", tg.name)
+					panic(err)
+				}
+				if parent == "" {
+					fmt.Printf("# Done making Package %s\n", tg.name)
+				} else {
+					fmt.Printf("# Done making dependent package %s for %s\n",
+						tg.name, parent)
+				}
+				wg.Done()
+			}(tg, &wg)
 		})
 	}
+	wg.Wait()
 }
 
 func main() {
