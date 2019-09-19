@@ -1168,10 +1168,11 @@ func (goenv *goenv) stripBinary(in string) (out []byte, err error) {
 }
 
 func shellCommand(cmdline string) (cmd *exec.Cmd) {
-	args := []string{"-c", cmdline}
+	args := []string{}
 	if *xFlag {
 		args = append(args, "-x")
 	}
+	args = append(args, "-c", cmdline)
 	host.log(append([]string{"sh"}, args...)...)
 	if *nFlag {
 		return nil
