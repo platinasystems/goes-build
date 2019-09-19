@@ -102,7 +102,7 @@ diag	include manufacturing diagnostics with BMC
 		goarch:           "amd64",
 		goos:             "linux",
 		gnuPrefix:        "x86_64-linux-gnu-",
-		kernelMakeTarget: "bindeb-pkg",
+		kernelMakeTarget: "bzImage",
 		kernelPath:       "arch/x86/boot/bzImage",
 		kernelConfigPath: "arch/x86/configs",
 		kernelArch:       "x86_64",
@@ -134,6 +134,7 @@ diag	include manufacturing diagnostics with BMC
 	corebootPlatinaMk1              *target
 	corebootPlatinaMk1RecoveryRom   *target
 	corebootPlatinaMk1Rom           *target
+	exampleAmd64Deb                 *target
 	exampleAmd64Vmlinuz             *target
 	goesBoot                        *target
 	goesBootArm                     *target
@@ -150,6 +151,7 @@ diag	include manufacturing diagnostics with BMC
 	goesRecovery                    *target
 	itbPlatinaMk1Bmc                *target
 	platinaMk1BmcVmlinuz            *target
+	platinaMk1Deb                   *target
 	platinaMk1Vmlinuz               *target
 	platinaMk2Lc1BmcVmlinuz         *target
 	platinaMk2Mc1BmcVmlinuz         *target
@@ -206,6 +208,13 @@ func init() {
 		main:     corebootPlatinaMk1Machine,
 		def:      true,
 		bootRoot: "goes-boot.cpio.xz",
+	}
+
+	exampleAmd64Deb = &target{
+		name:  "example-amd64.deb",
+		maker: makeAmd64LinuxKernelDeb,
+		main:  "platina-example-amd64_defconfig",
+		def:   true,
 	}
 
 	exampleAmd64Vmlinuz = &target{
@@ -315,6 +324,13 @@ func init() {
 		main:  "platina-mk1-bmc_defconfig",
 	}
 
+	platinaMk1Deb = &target{
+		name:  "platina-mk1.deb",
+		maker: makeAmd64LinuxKernelDeb,
+		main:  "platina-mk1_defconfig",
+		def:   true,
+	}
+
 	platinaMk1Vmlinuz = &target{
 		name:  "platina-mk1.vmlinuz",
 		maker: makeAmd64LinuxKernel,
@@ -381,9 +397,17 @@ func init() {
 		goesBoot,
 	}
 
+	exampleAmd64Deb.dependencies = []*target{
+		exampleAmd64Vmlinuz,
+	}
+
 	itbPlatinaMk1Bmc.dependencies = []*target{
 		goesPlatinaMk1Bmc,
 		platinaMk1BmcVmlinuz,
+	}
+
+	platinaMk1Deb.dependencies = []*target{
+		platinaMk1Vmlinuz,
 	}
 
 	zipPlatinaMk1Bmc.dependencies = []*target{
@@ -400,6 +424,7 @@ func init() {
 		corebootPlatinaMk1,
 		corebootPlatinaMk1RecoveryRom,
 		corebootPlatinaMk1Rom,
+		exampleAmd64Deb,
 		exampleAmd64Vmlinuz,
 		goesBoot,
 		goesBootArm,
@@ -416,6 +441,7 @@ func init() {
 		goesRecovery,
 		itbPlatinaMk1Bmc,
 		platinaMk1BmcVmlinuz,
+		platinaMk1Deb,
 		platinaMk1Vmlinuz,
 		platinaMk2Lc1BmcVmlinuz,
 		platinaMk2Mc1BmcVmlinuz,
@@ -673,7 +699,7 @@ func makeArmZipfile(tg *target) (err error) {
 
 func makeArmLinuxKernel(tg *target) (err error) {
 	machine := strings.TrimSuffix(tg.name, ".vmlinuz")
-	err = armLinux.makeLinux(tg.name, tg.main)
+	err = armLinux.makeLinux(tg)
 	if err != nil {
 		return
 	}
@@ -732,7 +758,11 @@ func makeAmd64CorebootRom(tg *target) (err error) {
 }
 
 func makeAmd64LinuxKernel(tg *target) (err error) {
-	return amd64Linux.makeLinux(tg.name, tg.main)
+	return amd64Linux.makeLinux(tg)
+}
+
+func makeAmd64LinuxKernelDeb(tg *target) (err error) {
+	return amd64Linux.makeLinuxDeb(tg)
 }
 
 func makeAmd64LinuxInitramfs(tg *target) (err error) {
@@ -1177,8 +1207,7 @@ func shellCommandRun(cmdline string) (err error) {
 	return
 }
 
-func configWorktree(repo string, machine string, config string) (workdir string, err error) {
-	var gitdir string
+func findWorktree(repo string, machine string) (workdir string, gitdir string, err error) {
 	for _, dir := range []string{
 		filepath.Join(platina, repo),
 		filepath.Join(platina, "src", repo),
@@ -1188,16 +1217,24 @@ func configWorktree(repo string, machine string, config string) (workdir string,
 			var err error
 			gitdir, err = filepath.Abs(dir)
 			if err != nil {
-				return "", fmt.Errorf("Can't make %s absolute: %s",
+				return "", "", fmt.Errorf("Can't make %s absolute: %s",
 					dir, err)
 			}
 			break
 		}
 	}
 	if len(gitdir) == 0 {
-		return "", fmt.Errorf("can't find gitdir for %s", repo)
+		return "", "", fmt.Errorf("can't find gitdir for %s", repo)
 	}
 	workdir = filepath.Join("worktrees", repo, machine)
+	return
+}
+
+func configWorktree(repo string, machine string, config string) (workdir string, err error) {
+	workdir, gitdir, err := findWorktree(repo, machine)
+	if err != nil {
+		return
+	}
 	_, err = os.Stat(workdir)
 	if os.IsNotExist(err) {
 		clone := ""
@@ -1250,9 +1287,9 @@ func (goenv *goenv) makeboot(out string, configCommand string) (err error) {
 	return
 }
 
-func (goenv *goenv) makeLinux(out string, config string) (err error) {
-	machine := strings.TrimSuffix(out, ".vmlinuz")
-	configCommand := "cp " + goenv.kernelConfigPath + "/" + config +
+func (goenv *goenv) makeLinux(tg *target) (err error) {
+	machine := strings.TrimSuffix(tg.name, ".vmlinuz")
+	configCommand := "cp " + goenv.kernelConfigPath + "/" + tg.main +
 		" .config" +
 		" && make oldconfig ARCH=" + goenv.kernelArch
 
@@ -1276,8 +1313,33 @@ func (goenv *goenv) makeLinux(out string, config string) (err error) {
 		goenv.kernelMakeTarget); err != nil {
 		return err
 	}
-	cmdline := "cp " + dir + "/" + goenv.kernelPath + " " + out
+	cmdline := "cp " + dir + "/" + goenv.kernelPath + " " + tg.name
 	if err := shellCommandRun(cmdline); err != nil {
+		return err
+	}
+	return
+}
+
+func (goenv *goenv) makeLinuxDeb(tg *target) (err error) {
+	machine := strings.TrimSuffix(tg.name, ".deb")
+	dir, _, err := findWorktree("linux", machine)
+	if err != nil {
+		return
+	}
+	ver, err := shellCommandOutput("cd " + dir + " && git describe")
+	if err != nil {
+		return err
+	}
+	ver = strings.TrimLeft(ver, "v")
+	f := strings.Split(ver, "-")
+	id := f[0] + "-" + machine
+	if err := shellCommandRun("make -C " + dir +
+		" -j " + strconv.Itoa(runtime.NumCPU()*2) +
+		" ARCH=" + goenv.kernelArch +
+		" CROSS_COMPILE=" + goenv.gnuPrefix +
+		" KDEB_PKGVERSION=" + ver +
+		" KERNELRELEASE=" + id +
+		" bindeb-pkg"); err != nil {
 		return err
 	}
 	return
