@@ -468,10 +468,10 @@ func makeTargets(parent string, targets []*target) {
 				fmt.Printf("# Making dependent package %s for %s\n",
 					tg.name, parent)
 			}
-			makeTargets(tg.name, tg.dependencies)
-
 			wg.Add(1)
+
 			go func(tg *target, wg *sync.WaitGroup) {
+				makeTargets(tg.name, tg.dependencies)
 				err := tg.maker(tg)
 				if err != nil {
 					fmt.Printf("Error making package %s\n", tg.name)
