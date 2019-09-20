@@ -56,8 +56,9 @@ type target struct {
 	dir          string
 	def          bool
 	dependencies []*target
-	once         sync.Once
+	mutex        sync.Mutex
 	bootRoot     string
+	built        bool
 }
 
 type goenv struct {
@@ -461,16 +462,17 @@ func makeTargets(parent string, targets []*target) {
 	var wg sync.WaitGroup
 
 	for _, tg := range targets {
-		tg.once.Do(func() {
-			if parent == "" {
-				fmt.Printf("# Making Package %s\n", tg.name)
-			} else {
-				fmt.Printf("# Making dependent package %s for %s\n",
-					tg.name, parent)
-			}
-			wg.Add(1)
+		wg.Add(1)
+		go func(tg *target, wg *sync.WaitGroup) {
+			tg.mutex.Lock()
+			if !tg.built {
+				if parent == "" {
+					fmt.Printf("# Making Package %s\n", tg.name)
+				} else {
+					fmt.Printf("# Making dependent package %s for %s\n",
+						tg.name, parent)
+				}
 
-			go func(tg *target, wg *sync.WaitGroup) {
 				makeTargets(tg.name, tg.dependencies)
 				err := tg.maker(tg)
 				if err != nil {
@@ -483,9 +485,19 @@ func makeTargets(parent string, targets []*target) {
 					fmt.Printf("# Done making dependent package %s for %s\n",
 						tg.name, parent)
 				}
-				wg.Done()
-			}(tg, &wg)
-		})
+				tg.built = true
+			} else {
+				if parent == "" {
+					fmt.Printf("# Package %s already built\n",
+						tg.name)
+				} else {
+					fmt.Printf("# Dependent package %s for %s already built\n",
+						tg.name, parent)
+				}
+			}
+			tg.mutex.Unlock()
+			wg.Done()
+		}(tg, &wg)
 	}
 	wg.Wait()
 }
