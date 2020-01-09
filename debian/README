@@ -1,0 +1,5 @@
+The Debian Package goes-build
+----------------------------
+
+ -- Kevin Paul Herbert <kph@platinasystems.com>  Tue 17 Mar 2020 14:22:00 -0600
+	First pass at packaging goes-build into a Debian package.

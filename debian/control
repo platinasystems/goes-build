@@ -1,0 +1,17 @@
+Source: goes-build
+Section: devel
+Priority: optional
+Maintainer: Kevin Paul Herbert <kph@platinasystems.com>
+Build-Depends: debhelper (>= 10), golang-1.13
+Standards-Version: 3.9.8
+Homepage: https://github.com/platinasystems/goes-build
+Vcs-Git: https://github.com/platinasystems/goes-build.git
+
+Package: goes-build
+Architecture: any
+Depends: ${misc:Depends}
+Description: Build tool for Platina Systems
+ goes-build is used to build system images used in Platina Systems
+ products. It is used for building x86 boot ROMs and BMC system
+ images.
+
