@@ -25,35 +25,33 @@ import (
 )
 
 const (
-	platina               = ".."
-	platinaFe1            = platina + "/fe1"
-	platinaFe1Firmware    = platina + "/firmware-fe1a"
-	platinaGoes           = platina + "/goes"
-	platinaGoesLegacy     = platina + "/goes-legacy"
-	platinaGoesLegacyMain = platinaGoesLegacy + "/main"
-	platinaSecrets        = platina + "/platina-secrets"
-	platinaVnetMk1        = platina + "/vnet-platina-mk1"
+	platinaFe1Dir            = "fe1"
+	platinaFe1FirmwareDir    = "firmware-fe1a"
+	platinaGoesDir           = "goes"
+	platinaGoesLegacyDir     = "goes-legacy"
+	platinaGoesLegacyMainDir = platinaGoesLegacyDir + "/main"
+	platinaSecretsDir        = "platina-secrets"
+	platinaVnetMk1Dir        = "vnet-platina-mk1"
 
-	platinaSystemBuildSrc = platina + "/system-build/src"
+	platinaSystemBuildSrcDir = "system-build/src"
 
-	platinaGoesMainIP                   = platinaGoesLegacyMain + "/ip"
-	platinaGoesMainGoesPrefix           = platinaGoesLegacyMain + "goes-"
-	platinaGoesMainGoesExample          = platina + "/goes-example"
-	platinaGoesMainGoesBoot             = platina + "/goes-boot"
-	platinaGoesMainGoesInstaller        = platinaGoesLegacyMain + "/goes-installer"
-	platinaGoesMainGoesPlatinaMk1       = platina + "/goes-platina-mk1"
-	platinaGoesMainGoesPlatinaMk1Bmc    = platina + "/goes-bmc"
-	platinaGoesMainGoesPlatinaMk2       = platinaGoesLegacyMain + "/goes-platina-mk2"
+	platinaGoesMainIPDir                = platinaGoesLegacyMainDir + "/ip"
+	platinaGoesMainGoesExampleDir       = "goes-example"
+	platinaGoesMainGoesBootDir          = "goes-boot"
+	platinaGoesMainGoesInstaller        = platinaGoesLegacyMainDir + "/goes-installer"
+	platinaGoesMainGoesPlatinaMk1Dir    = "goes-platina-mk1"
+	platinaGoesMainGoesPlatinaMk1BmcDir = "goes-bmc"
+	platinaGoesMainGoesPlatinaMk2       = platinaGoesLegacyMainDir + "/goes-platina-mk2"
 	platinaGoesMainGoesPlatinaMk2Lc1Bmc = platinaGoesMainGoesPlatinaMk2 + "-lc1-bmc"
 	platinaGoesMainGoesPlatinaMk2Mc1Bmc = platinaGoesMainGoesPlatinaMk2 + "-mc1-bmc"
-	platinaGoesMainGoesRecovery         = platina + "/goes-recovery"
+	platinaGoesMainGoesRecoveryDir      = "goes-recovery"
 )
 
 type target struct {
 	name         string
 	maker        func(tg *target) error
-	main         string
-	dir          string
+	config       string
+	dirName      string
 	def          bool
 	dependencies []*target
 	mutex        sync.Mutex
@@ -162,21 +160,23 @@ diag	include manufacturing diagnostics with BMC
 
 	allTargets = []*target{}
 	targetMap  = map[string]*target{}
+
+	platinaPath = ".."
 )
 
 func init() {
 	flag.Usage = usage
 
 	corebootExampleAmd64 = &target{
-		name:  "coreboot-example-amd64",
-		maker: makeAmd64Boot,
-		main:  corebootExampleAmd64Config,
+		name:   "coreboot-example-amd64",
+		maker:  makeAmd64Boot,
+		config: corebootExampleAmd64Config,
 	}
 
 	corebootExampleAmd64RecoveryRom = &target{
 		name:     "coreboot-example-amd64-recovery.rom",
 		maker:    makeAmd64CorebootRom,
-		main:     corebootExampleAmd64Machine,
+		config:   corebootExampleAmd64Machine,
 		def:      true,
 		bootRoot: "goes-recovery.cpio.xz",
 	}
@@ -184,21 +184,21 @@ func init() {
 	corebootExampleAmd64Rom = &target{
 		name:     "coreboot-example-amd64.rom",
 		maker:    makeAmd64CorebootRom,
-		main:     corebootExampleAmd64Machine,
+		config:   corebootExampleAmd64Machine,
 		def:      true,
 		bootRoot: "goes-boot.cpio.xz",
 	}
 
 	corebootPlatinaMk1 = &target{
-		name:  "coreboot-platina-mk1",
-		maker: makeAmd64Boot,
-		main:  corebootPlatinaMk1Config,
+		name:   "coreboot-platina-mk1",
+		maker:  makeAmd64Boot,
+		config: corebootPlatinaMk1Config,
 	}
 
 	corebootPlatinaMk1RecoveryRom = &target{
 		name:     "coreboot-platina-mk1-recovery.rom",
 		maker:    makeAmd64CorebootRom,
-		main:     corebootPlatinaMk1Machine,
+		config:   corebootPlatinaMk1Machine,
 		def:      true,
 		bootRoot: "goes-recovery.cpio.xz",
 	}
@@ -206,162 +206,153 @@ func init() {
 	corebootPlatinaMk1Rom = &target{
 		name:     "coreboot-platina-mk1.rom",
 		maker:    makeAmd64CorebootRom,
-		main:     corebootPlatinaMk1Machine,
+		config:   corebootPlatinaMk1Machine,
 		def:      true,
 		bootRoot: "goes-boot.cpio.xz",
 	}
 
 	exampleAmd64Deb = &target{
-		name:  "example-amd64.deb",
-		maker: makeAmd64LinuxKernelDeb,
-		main:  "platina-example-amd64_defconfig",
-		def:   true,
+		name:   "example-amd64.deb",
+		maker:  makeAmd64LinuxKernelDeb,
+		config: "platina-example-amd64_defconfig",
+		def:    true,
 	}
 
 	exampleAmd64Vmlinuz = &target{
-		name:  "example-amd64.vmlinuz",
-		maker: makeAmd64LinuxKernel,
-		main:  "platina-example-amd64_defconfig",
-		def:   true,
+		name:   "example-amd64.vmlinuz",
+		maker:  makeAmd64LinuxKernel,
+		config: "platina-example-amd64_defconfig",
+		def:    true,
 	}
 
 	goesBoot = &target{
-		name:  "goes-boot",
-		maker: makeAmd64LinuxInitramfs,
-		main:  platinaGoesMainGoesBoot,
-		dir:   "../goes-boot",
+		name:    "goes-boot",
+		maker:   makeAmd64LinuxInitramfs,
+		dirName: platinaGoesMainGoesBootDir,
 	}
 
 	goesBootArm = &target{
-		name:  "goes-boot-arm",
-		maker: makeArmLinuxInitramfs,
-		main:  platinaGoesMainGoesBoot,
-		dir:   "../goes-boot",
+		name:    "goes-boot-arm",
+		maker:   makeArmLinuxInitramfs,
+		dirName: platinaGoesMainGoesBootDir,
 	}
 
 	goesExample = &target{
-		name:  "goes-example",
-		maker: makeHost,
-		main:  platinaGoesMainGoesExample,
-		dir:   "../goes-example",
-		def:   true,
+		name:    "goes-example",
+		maker:   makeHost,
+		dirName: platinaGoesMainGoesExampleDir,
+		def:     true,
 	}
 
 	goesExampleArm = &target{
-		name:  "goes-example-arm",
-		maker: makeArmLinuxStatic,
-		main:  platinaGoesMainGoesExample,
-		dir:   "../goes-example",
-		def:   true,
+		name:    "goes-example-arm",
+		maker:   makeArmLinuxStatic,
+		dirName: platinaGoesMainGoesExampleDir,
+		def:     true,
 	}
 
 	goesIP = &target{
-		name:  "goes-ip",
-		maker: makeHost,
-		main:  platinaGoesMainIP,
+		name:    "goes-ip",
+		maker:   makeHost,
+		dirName: platinaGoesMainIPDir,
 	}
 
 	goesIPTest = &target{
-		name:  "goes-ip.test",
-		maker: makeHostTest,
-		main:  platinaGoesMainIP,
+		name:    "goes-ip.test",
+		maker:   makeHostTest,
+		dirName: platinaGoesMainIPDir,
 	}
 
 	goesPlatinaMk1 = &target{
-		name:  "goes-platina-mk1",
-		maker: makeGoesPlatinaMk1,
-		main:  platinaGoesMainGoesPlatinaMk1,
-		dir:   "../goes-platina-mk1",
-		def:   true,
+		name:    "goes-platina-mk1",
+		maker:   makeGoesPlatinaMk1,
+		dirName: platinaGoesMainGoesPlatinaMk1Dir,
+		def:     true,
 	}
 
 	goesPlatinaMk1Bmc = &target{
-		name:  "goes-platina-mk1-bmc",
-		maker: makeArmLinuxInitramfs,
-		main:  platinaGoesMainGoesPlatinaMk1Bmc,
-		dir:   "../goes-bmc",
+		name:    "goes-platina-mk1-bmc",
+		maker:   makeArmLinuxInitramfs,
+		dirName: platinaGoesMainGoesPlatinaMk1BmcDir,
 	}
 
 	goesPlatinaMk1Installer = &target{
-		name:  "goes-platina-mk1-installer",
-		maker: makeGoesPlatinaMk1Installer,
-		main:  platinaGoesMainGoesPlatinaMk1,
+		name:    "goes-platina-mk1-installer",
+		maker:   makeGoesPlatinaMk1Installer,
+		dirName: platinaGoesMainGoesPlatinaMk1Dir,
 	}
 
 	goesPlatinaMk1Test = &target{
-		name:  "goes-platina-mk1.test",
-		maker: makeAmd64LinuxTest,
-		main:  platinaGoesMainGoesPlatinaMk1,
+		name:    "goes-platina-mk1.test",
+		maker:   makeAmd64LinuxTest,
+		dirName: platinaGoesMainGoesPlatinaMk1Dir,
 	}
 
 	goesPlatinaMk2Lc1Bmc = &target{
-		name:  "goes-platina-mk2-lc1-bmc",
-		maker: makeArmLinuxStatic,
-		main:  platinaGoesMainGoesPlatinaMk2Lc1Bmc,
+		name:    "goes-platina-mk2-lc1-bmc",
+		maker:   makeArmLinuxStatic,
+		dirName: platinaGoesMainGoesPlatinaMk2Lc1Bmc,
 	}
 
 	goesPlatinaMk2Mc1Bmc = &target{
-		name:  "goes-platina-mk2-mc1-bmc",
-		maker: makeArmLinuxStatic,
-		main:  platinaGoesMainGoesPlatinaMk2Mc1Bmc,
+		name:    "goes-platina-mk2-mc1-bmc",
+		maker:   makeArmLinuxStatic,
+		dirName: platinaGoesMainGoesPlatinaMk2Mc1Bmc,
 	}
 
 	goesRecovery = &target{
-		name:  "goes-recovery",
-		maker: makeAmd64LinuxInitramfs,
-		main:  platinaGoesMainGoesRecovery,
-		dir:   "../goes-recovery",
+		name:    "goes-recovery",
+		maker:   makeAmd64LinuxInitramfs,
+		dirName: platinaGoesMainGoesRecoveryDir,
 	}
 
 	itbPlatinaMk1Bmc = &target{
 		name:  "platina-mk1-bmc.itb",
 		maker: makeArmItb,
-		main:  "platina-mk1-bmc.its",
 	}
 
 	platinaMk1BmcVmlinuz = &target{
-		name:  "platina-mk1-bmc.vmlinuz",
-		maker: makeArmLinuxKernel,
-		main:  "platina-mk1-bmc_defconfig",
+		name:   "platina-mk1-bmc.vmlinuz",
+		maker:  makeArmLinuxKernel,
+		config: "platina-mk1-bmc_defconfig",
 	}
 
 	platinaMk1Deb = &target{
-		name:  "platina-mk1.deb",
-		maker: makeAmd64LinuxKernelDeb,
-		main:  "platina-mk1_defconfig",
-		def:   true,
+		name:   "platina-mk1.deb",
+		maker:  makeAmd64LinuxKernelDeb,
+		config: "platina-mk1_defconfig",
+		def:    true,
 	}
 
 	platinaMk1Vmlinuz = &target{
-		name:  "platina-mk1.vmlinuz",
-		maker: makeAmd64LinuxKernel,
-		main:  "platina-mk1_defconfig",
+		name:   "platina-mk1.vmlinuz",
+		maker:  makeAmd64LinuxKernel,
+		config: "platina-mk1_defconfig",
 	}
 
 	platinaMk2Lc1BmcVmlinuz = &target{
-		name:  "platina-mk2-lc1-bmc.vmlinuz",
-		maker: makeArmLinuxKernel,
-		main:  "platina-mk2-lc1-bmc_defconfig",
+		name:   "platina-mk2-lc1-bmc.vmlinuz",
+		maker:  makeArmLinuxKernel,
+		config: "platina-mk2-lc1-bmc_defconfig",
 	}
 
 	platinaMk2Mc1BmcVmlinuz = &target{
-		name:  "platina-mk2-mc1-bmc.vmlinuz",
-		maker: makeArmLinuxKernel,
-		main:  "platina-mk2-mc1-bmc_defconfig",
+		name:   "platina-mk2-mc1-bmc.vmlinuz",
+		maker:  makeArmLinuxKernel,
+		config: "platina-mk2-mc1-bmc_defconfig",
 	}
 
 	ubootPlatinaMk1Bmc = &target{
-		name:  "u-boot-platina-mk1-bmc",
-		maker: makeArmBoot,
-		main:  "platinamx6boards_qspi_defconfig",
+		name:   "u-boot-platina-mk1-bmc",
+		maker:  makeArmBoot,
+		config: "platinamx6boards_qspi_defconfig",
 	}
 
 	vnetPlatinaMk1 = &target{
-		name:  "vnet-platina-mk1",
-		maker: makeAmd64LinuxStatic,
-		main:  platinaVnetMk1,
-		dir:   "../vnet-platina-mk1",
-		def:   true,
+		name:    "vnet-platina-mk1",
+		maker:   makeAmd64LinuxStatic,
+		dirName: platinaVnetMk1Dir,
+		def:     true,
 	}
 
 	zipPlatinaMk1Bmc = &target{
@@ -544,13 +535,13 @@ func usage() {
 }
 
 func makeArmLinuxStatic(tg *target) error {
-	return armLinux.godoforpkg(tg, "build", "-o", tg.name, "-tags", "netgo",
-		"-ldflags", "-d", tg.main)
+	return armLinux.goDoForPkg(tg, "build", "-tags", "netgo",
+		"-ldflags", "-d")
 }
 
 func makeArmBoot(tg *target) (err error) {
 	machine := strings.TrimPrefix(tg.name, "u-boot-")
-	if err = armLinux.makeboot(tg.name, "make "+tg.main); err != nil {
+	if err = armLinux.makeboot(tg.name, "make "+tg.config); err != nil {
 		return err
 	}
 	env, err := makeUbootEnv()
@@ -734,30 +725,30 @@ func makeArmLinuxInitramfs(tg *target) (err error) {
 }
 
 func makeAmd64Boot(tg *target) (err error) {
-	return amd64Linux.makeboot(tg.name, "MAKEINFO=missing make crossgcc-i386 && make "+tg.main)
+	return amd64Linux.makeboot(tg.name, "MAKEINFO=missing make crossgcc-i386 && make "+tg.config)
 }
 
 func makeAmd64Linux(tg *target) error {
-	return amd64Linux.godoforpkg(tg, "build", "-o", tg.name, tg.main)
+	return amd64Linux.goDoForPkg(tg, "build")
 }
 
 func makeAmd64LinuxStatic(tg *target) error {
-	return amd64Linux.godoforpkg(tg, "build", "-o", tg.name, "-tags", "netgo", tg.main)
+	return amd64Linux.goDoForPkg(tg, "build", "-tags", "netgo")
 }
 
 func makeAmd64LinuxTest(tg *target) error {
-	return amd64Linux.godoforpkg(tg, "test", "-c", "-o", tg.name, tg.main)
+	return amd64Linux.goDoForPkg(tg, "test", "-c")
 }
 
 func makeAmd64CorebootRom(tg *target) (err error) {
-	dir := "worktrees/coreboot/" + tg.main
+	dir := "worktrees/coreboot/" + tg.config
 	build := dir + "/build"
 	cbfstool := build + "/cbfstool"
 	tmprom := tg.name + ".tmp"
 
 	cmdline := "cp " + build + "/coreboot.rom " + tmprom +
 		" && " + cbfstool + " " + tmprom + " add-payload" +
-		" -f " + tg.main + ".vmlinuz" +
+		" -f " + tg.config + ".vmlinuz" +
 		" -I " + tg.bootRoot +
 		` -C "console=ttyS0,115200n8 intel_iommu=off quiet"` +
 		" -n fallback/payload -c none -r COREBOOT" +
@@ -786,11 +777,11 @@ func makeAmd64LinuxInitramfs(tg *target) (err error) {
 }
 
 func makeHost(tg *target) error {
-	return host.godoforpkg(tg, "build", "-o", tg.name, tg.main)
+	return host.goDoForPkg(tg, "build")
 }
 
 func makeHostTest(tg *target) error {
-	return host.godoforpkg(tg, "test", "-c", "-o", tg.name, tg.main)
+	return host.goDoForPkg(tg, "test", "-c")
 }
 
 func makeGoesPlatinaMk1(tg *target) error {
@@ -798,10 +789,7 @@ func makeGoesPlatinaMk1(tg *target) error {
 	if strings.Index(*tagsFlag, "debug") >= 0 {
 		args = append(args, "-gcflags", "-N -l")
 	}
-	return amd64Linux.godoforpkg(goesPlatinaMk1,
-		append(append([]string{"build", "-o",
-			goesPlatinaMk1.name},
-			args...), goesPlatinaMk1.dir)...)
+	return amd64Linux.goDoForPkg(goesPlatinaMk1, "build", args...)
 }
 
 func makeGoesPlatinaMk1Installer(tg *target) error {
@@ -812,7 +800,7 @@ func makeGoesPlatinaMk1Installer(tg *target) error {
 	if err != nil {
 		return err
 	}
-	err = amd64Linux.godoforpkg(tg, "build", "-o", tinstaller,
+	err = amd64Linux.goDoInDir(tg.dirName, "build", "-o", tinstaller,
 		platinaGoesMainGoesInstaller)
 	if err != nil {
 		return err
@@ -915,7 +903,8 @@ func (goenv *goenv) makeCpioArchive(tg *target) (err error) {
 		{"etc/ssl/certs/ca-certificates.crt", 0644,
 			"/etc/ssl/certs/ca-certificates.crt"},
 		{"etc/goes/sshd/authorized_keys.default", 0600,
-			platinaSecrets + "/secrets/sshd/id_rsa.pub"},
+			filepath.Join(platinaPath, platinaSecretsDir,
+				"/secrets/sshd/id_rsa.pub")},
 	} {
 		if err = mkfileFromHostCpio(w, file.tname, file.mode, file.hname); err != nil {
 			return
@@ -930,7 +919,7 @@ func (goenv *goenv) makeCpioArchive(tg *target) (err error) {
 		return
 	}
 
-	goesbin, err := goenv.stripBinary(tg.dir + "/" + tg.name)
+	goesbin, err := goenv.stripBinary(filepath.Join(platinaPath, tg.dirName, tg.name))
 	if err != nil {
 		return
 	}
@@ -999,7 +988,7 @@ func mkfileFromHostCpio(w *cpio.Writer, tname string, mode os.FileMode, hname st
 	return mkfileFromSliceCpio(w, tname, mode, hname, data)
 }
 
-func (goenv *goenv) godoindir(dir string, args ...string) error {
+func (goenv *goenv) goDoInDir(dir string, args ...string) error {
 	if len(*tagsFlag) > 0 {
 		done := false
 		for i, arg := range args {
@@ -1024,7 +1013,7 @@ func (goenv *goenv) godoindir(dir string, args ...string) error {
 		args = append([]string{args[0], "-x"}, args[1:]...)
 	}
 	cmd := exec.Command("go", args...)
-	cmd.Dir = dir
+	cmd.Dir = filepath.Join(platinaPath, dir)
 	cmd.Env = os.Environ()
 	if goenv.goarch != runtime.GOARCH {
 		cmd.Env = append(cmd.Env, fmt.Sprint("GOARCH=", goenv.goarch))
@@ -1041,16 +1030,15 @@ func (goenv *goenv) godoindir(dir string, args ...string) error {
 	return cmd.Run()
 }
 
-func (goenv *goenv) godo(args ...string) error {
-	return goenv.godoindir(platinaGoes, args...)
-}
-
-func (goenv *goenv) godoforpkg(tg *target, args ...string) error {
-	dir := tg.dir
+func (goenv *goenv) goDoForPkg(tg *target, op string, pkgArgs ...string) error {
+	dir := tg.dirName
 	if dir == "" {
-		dir = platinaGoes // legacy packages
+		dir = platinaGoesDir // legacy packages
 	}
-	return goenv.godoindir(dir, args...)
+	args := []string{op, "-o", tg.name}
+	args = append(args, pkgArgs...)
+	args = append(args, filepath.Join(platinaPath, dir))
+	return goenv.goDoInDir(dir, args...)
 }
 
 func (goenv *goenv) log(args ...string) {
@@ -1237,9 +1225,9 @@ func shellCommandRun(cmdline string) (err error) {
 
 func findWorktree(repo string, machine string) (workdir string, gitdir string, err error) {
 	for _, dir := range []string{
-		filepath.Join(platina, repo),
-		filepath.Join(platina, "src", repo),
-		filepath.Join(platinaSystemBuildSrc, repo),
+		filepath.Join(platinaPath, repo),
+		filepath.Join(platinaPath, "src", repo),
+		filepath.Join(platinaPath, platinaSystemBuildSrcDir, repo),
 	} {
 		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
 			var err error
@@ -1317,7 +1305,7 @@ func (goenv *goenv) makeboot(out string, configCommand string) (err error) {
 
 func (goenv *goenv) makeLinux(tg *target) (err error) {
 	machine := strings.TrimSuffix(tg.name, ".vmlinuz")
-	configCommand := "cp " + goenv.kernelConfigPath + "/" + tg.main +
+	configCommand := "cp " + goenv.kernelConfigPath + "/" + tg.config +
 		" .config" +
 		" && make oldconfig ARCH=" + goenv.kernelArch
 
