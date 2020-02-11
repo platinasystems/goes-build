@@ -44,7 +44,6 @@ const (
 	platinaGoesMainGoesPlatinaMk2       = platinaGoesLegacyMainDir + "/goes-platina-mk2"
 	platinaGoesMainGoesPlatinaMk2Lc1Bmc = platinaGoesMainGoesPlatinaMk2 + "-lc1-bmc"
 	platinaGoesMainGoesPlatinaMk2Mc1Bmc = platinaGoesMainGoesPlatinaMk2 + "-mc1-bmc"
-	platinaGoesMainGoesRecoveryDir      = "goes-recovery"
 )
 
 type target struct {
@@ -127,36 +126,34 @@ diag	include manufacturing diagnostics with BMC
 	corebootPlatinaMk1Config  = "platina-mk1_defconfig"
 	corebootPlatinaMk1Machine = "platina-mk1"
 
-	corebootExampleAmd64            *target
-	corebootExampleAmd64RecoveryRom *target
-	corebootExampleAmd64Rom         *target
-	corebootPlatinaMk1              *target
-	corebootPlatinaMk1RecoveryRom   *target
-	corebootPlatinaMk1Rom           *target
-	exampleAmd64Deb                 *target
-	exampleAmd64Vmlinuz             *target
-	goesBoot                        *target
-	goesBootArm                     *target
-	goesExample                     *target
-	goesExampleArm                  *target
-	goesIP                          *target
-	goesIPTest                      *target
-	goesPlatinaMk1                  *target
-	goesPlatinaMk1Bmc               *target
-	goesPlatinaMk1Installer         *target
-	goesPlatinaMk1Test              *target
-	goesPlatinaMk2Lc1Bmc            *target
-	goesPlatinaMk2Mc1Bmc            *target
-	goesRecovery                    *target
-	itbPlatinaMk1Bmc                *target
-	platinaMk1BmcVmlinuz            *target
-	platinaMk1Deb                   *target
-	platinaMk1Vmlinuz               *target
-	platinaMk2Lc1BmcVmlinuz         *target
-	platinaMk2Mc1BmcVmlinuz         *target
-	ubootPlatinaMk1Bmc              *target
-	vnetPlatinaMk1                  *target
-	zipPlatinaMk1Bmc                *target
+	corebootExampleAmd64    *target
+	corebootExampleAmd64Rom *target
+	corebootPlatinaMk1      *target
+	corebootPlatinaMk1Rom   *target
+	exampleAmd64Deb         *target
+	exampleAmd64Vmlinuz     *target
+	goesBoot                *target
+	goesBootArm             *target
+	goesBootrom             *target
+	goesExample             *target
+	goesExampleArm          *target
+	goesIP                  *target
+	goesIPTest              *target
+	goesPlatinaMk1          *target
+	goesPlatinaMk1Bmc       *target
+	goesPlatinaMk1Installer *target
+	goesPlatinaMk1Test      *target
+	goesPlatinaMk2Lc1Bmc    *target
+	goesPlatinaMk2Mc1Bmc    *target
+	itbPlatinaMk1Bmc        *target
+	platinaMk1BmcVmlinuz    *target
+	platinaMk1Deb           *target
+	platinaMk1Vmlinuz       *target
+	platinaMk2Lc1BmcVmlinuz *target
+	platinaMk2Mc1BmcVmlinuz *target
+	ubootPlatinaMk1Bmc      *target
+	vnetPlatinaMk1          *target
+	zipPlatinaMk1Bmc        *target
 
 	allTargets = []*target{}
 	targetMap  = map[string]*target{}
@@ -173,20 +170,12 @@ func init() {
 		config: corebootExampleAmd64Config,
 	}
 
-	corebootExampleAmd64RecoveryRom = &target{
-		name:     "coreboot-example-amd64-recovery.rom",
-		maker:    makeAmd64CorebootRom,
-		config:   corebootExampleAmd64Machine,
-		def:      true,
-		bootRoot: "goes-recovery.cpio.xz",
-	}
-
 	corebootExampleAmd64Rom = &target{
 		name:     "coreboot-example-amd64.rom",
 		maker:    makeAmd64CorebootRom,
 		config:   corebootExampleAmd64Machine,
 		def:      true,
-		bootRoot: "goes-boot.cpio.xz",
+		bootRoot: "goes-bootrom.cpio.xz",
 	}
 
 	corebootPlatinaMk1 = &target{
@@ -195,20 +184,12 @@ func init() {
 		config: corebootPlatinaMk1Config,
 	}
 
-	corebootPlatinaMk1RecoveryRom = &target{
-		name:     "coreboot-platina-mk1-recovery.rom",
-		maker:    makeAmd64CorebootRom,
-		config:   corebootPlatinaMk1Machine,
-		def:      true,
-		bootRoot: "goes-recovery.cpio.xz",
-	}
-
 	corebootPlatinaMk1Rom = &target{
 		name:     "coreboot-platina-mk1.rom",
 		maker:    makeAmd64CorebootRom,
 		config:   corebootPlatinaMk1Machine,
 		def:      true,
-		bootRoot: "goes-boot.cpio.xz",
+		bootRoot: "goes-bootrom.cpio.xz",
 	}
 
 	exampleAmd64Deb = &target{
@@ -227,6 +208,12 @@ func init() {
 
 	goesBoot = &target{
 		name:    "goes-boot",
+		maker:   makeAmd64LinuxStatic,
+		dirName: platinaGoesMainGoesBootDir,
+	}
+
+	goesBootrom = &target{
+		name:    "goes-bootrom",
 		maker:   makeAmd64LinuxInitramfs,
 		dirName: platinaGoesMainGoesBootDir,
 	}
@@ -300,12 +287,6 @@ func init() {
 		dirName: platinaGoesMainGoesPlatinaMk2Mc1Bmc,
 	}
 
-	goesRecovery = &target{
-		name:    "goes-recovery",
-		maker:   makeAmd64LinuxInitramfs,
-		dirName: platinaGoesMainGoesRecoveryDir,
-	}
-
 	itbPlatinaMk1Bmc = &target{
 		name:  "platina-mk1-bmc.itb",
 		maker: makeArmItb,
@@ -365,28 +346,16 @@ func init() {
 	// of the targets, since we need the pointer to the target already
 	// set up.
 
-	corebootExampleAmd64RecoveryRom.dependencies = []*target{
-		corebootExampleAmd64,
-		exampleAmd64Vmlinuz,
-		goesRecovery,
-	}
-
 	corebootExampleAmd64Rom.dependencies = []*target{
 		corebootExampleAmd64,
 		exampleAmd64Vmlinuz,
-		goesBoot,
-	}
-
-	corebootPlatinaMk1RecoveryRom.dependencies = []*target{
-		corebootPlatinaMk1,
-		platinaMk1Vmlinuz,
-		goesRecovery,
+		goesBootrom,
 	}
 
 	corebootPlatinaMk1Rom.dependencies = []*target{
 		corebootPlatinaMk1,
 		platinaMk1Vmlinuz,
-		goesBoot,
+		goesBootrom,
 	}
 
 	exampleAmd64Deb.dependencies = []*target{
@@ -411,15 +380,14 @@ func init() {
 
 	allTargets = []*target{
 		corebootExampleAmd64,
-		corebootExampleAmd64RecoveryRom,
 		corebootExampleAmd64Rom,
 		corebootPlatinaMk1,
-		corebootPlatinaMk1RecoveryRom,
 		corebootPlatinaMk1Rom,
 		exampleAmd64Deb,
 		exampleAmd64Vmlinuz,
 		goesBoot,
 		goesBootArm,
+		goesBootrom,
 		goesExample,
 		goesExampleArm,
 		goesIP,
@@ -430,7 +398,6 @@ func init() {
 		goesPlatinaMk1Test,
 		goesPlatinaMk2Lc1Bmc,
 		goesPlatinaMk2Mc1Bmc,
-		goesRecovery,
 		itbPlatinaMk1Bmc,
 		platinaMk1BmcVmlinuz,
 		platinaMk1Deb,
@@ -769,7 +736,7 @@ func makeAmd64LinuxKernelDeb(tg *target) (err error) {
 }
 
 func makeAmd64LinuxInitramfs(tg *target) (err error) {
-	err = makeAmd64LinuxStatic(tg)
+	err = amd64Linux.goDoForPkg(tg, "build", "-tags", "netgo,bootrom")
 	if err != nil {
 		return
 	}
