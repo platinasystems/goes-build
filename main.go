@@ -1034,6 +1034,9 @@ func (goenv *goenv) godoindir(dir string, args ...string) error {
 	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stdout
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig: syscall.SIGTERM,
+	}
 	goenv.log(cmd.Args...)
 	return cmd.Run()
 }
@@ -1117,6 +1120,9 @@ func zipa(fn string) error {
 	cmd := exec.Command("zip", "-q", "-A", fn)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig: syscall.SIGTERM,
+	}
 	host.log(cmd.Args...)
 	if *nFlag {
 		return nil
@@ -1158,6 +1164,9 @@ func filterCommand(in io.Reader, out io.Writer, name string, args ...string) (cm
 	cmd.Stdin = in
 	cmd.Stdout = out
 	cmd.Stderr = os.Stderr
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig: syscall.SIGTERM,
+	}
 	return cmd, cmd.Start()
 }
 
@@ -1171,6 +1180,9 @@ func (goenv *goenv) stripBinary(in string) (out []byte, err error) {
 	}
 	defer rm(outfile)
 	cmd := exec.Command(stripper, cmdline...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig: syscall.SIGTERM,
+	}
 	err = cmd.Run()
 	if err != nil {
 		return
@@ -1190,6 +1202,9 @@ func shellCommand(cmdline string) (cmd *exec.Cmd) {
 		return nil
 	}
 	cmd = exec.Command("sh", args...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig: syscall.SIGTERM,
+	}
 	cmd.Env = os.Environ()
 	return
 }
