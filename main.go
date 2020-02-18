@@ -56,6 +56,7 @@ type target struct {
 	mutex        sync.Mutex
 	bootRoot     string
 	built        bool
+	tags         string
 }
 
 type goenv struct {
@@ -133,8 +134,10 @@ diag	include manufacturing diagnostics with BMC
 	exampleAmd64Deb         *target
 	exampleAmd64Vmlinuz     *target
 	goesBoot                *target
+	goesBootPlatinaMk1      *target
 	goesBootArm             *target
 	goesBootrom             *target
+	goesBootromPlatinaMk1   *target
 	goesExample             *target
 	goesExampleArm          *target
 	goesIP                  *target
@@ -189,7 +192,7 @@ func init() {
 		maker:    makeAmd64CorebootRom,
 		config:   corebootPlatinaMk1Machine,
 		def:      true,
-		bootRoot: "goes-bootrom.cpio.xz",
+		bootRoot: "goes-bootrom-platina-mk1.cpio.xz",
 	}
 
 	exampleAmd64Deb = &target{
@@ -212,10 +215,24 @@ func init() {
 		dirName: platinaGoesMainGoesBootDir,
 	}
 
+	goesBootPlatinaMk1 = &target{
+		name:    "goes-boot-platina-mk1",
+		maker:   makeAmd64LinuxStatic,
+		dirName: platinaGoesMainGoesBootDir,
+		tags:    "mk1",
+	}
+
 	goesBootrom = &target{
 		name:    "goes-bootrom",
 		maker:   makeAmd64LinuxInitramfs,
 		dirName: platinaGoesMainGoesBootDir,
+	}
+
+	goesBootromPlatinaMk1 = &target{
+		name:    "goes-bootrom-platina-mk1",
+		maker:   makeAmd64LinuxInitramfs,
+		dirName: platinaGoesMainGoesBootDir,
+		tags:    "mk1",
 	}
 
 	goesBootArm = &target{
@@ -355,7 +372,7 @@ func init() {
 	corebootPlatinaMk1Rom.dependencies = []*target{
 		corebootPlatinaMk1,
 		platinaMk1Vmlinuz,
-		goesBootrom,
+		goesBootromPlatinaMk1,
 	}
 
 	exampleAmd64Deb.dependencies = []*target{
@@ -386,8 +403,10 @@ func init() {
 		exampleAmd64Deb,
 		exampleAmd64Vmlinuz,
 		goesBoot,
+		goesBootPlatinaMk1,
 		goesBootArm,
 		goesBootrom,
+		goesBootromPlatinaMk1,
 		goesExample,
 		goesExampleArm,
 		goesIP,
@@ -502,7 +521,7 @@ func usage() {
 }
 
 func makeArmLinuxStatic(tg *target) error {
-	return armLinux.goDoForPkg(tg, "build", "-tags", "netgo",
+	return armLinux.goDoForPkg(tg, "build", "netgo",
 		"-ldflags", "-d")
 }
 
@@ -696,15 +715,15 @@ func makeAmd64Boot(tg *target) (err error) {
 }
 
 func makeAmd64Linux(tg *target) error {
-	return amd64Linux.goDoForPkg(tg, "build")
+	return amd64Linux.goDoForPkg(tg, "build", "")
 }
 
 func makeAmd64LinuxStatic(tg *target) error {
-	return amd64Linux.goDoForPkg(tg, "build", "-tags", "netgo")
+	return amd64Linux.goDoForPkg(tg, "build", "netgo")
 }
 
 func makeAmd64LinuxTest(tg *target) error {
-	return amd64Linux.goDoForPkg(tg, "test", "-c")
+	return amd64Linux.goDoForPkg(tg, "test", "", "-c")
 }
 
 func makeAmd64CorebootRom(tg *target) (err error) {
@@ -736,7 +755,7 @@ func makeAmd64LinuxKernelDeb(tg *target) (err error) {
 }
 
 func makeAmd64LinuxInitramfs(tg *target) (err error) {
-	err = amd64Linux.goDoForPkg(tg, "build", "-tags", "netgo,bootrom")
+	err = amd64Linux.goDoForPkg(tg, "build", "netgo,bootrom")
 	if err != nil {
 		return
 	}
@@ -744,11 +763,11 @@ func makeAmd64LinuxInitramfs(tg *target) (err error) {
 }
 
 func makeHost(tg *target) error {
-	return host.goDoForPkg(tg, "build")
+	return host.goDoForPkg(tg, "build", "")
 }
 
 func makeHostTest(tg *target) error {
-	return host.goDoForPkg(tg, "test", "-c")
+	return host.goDoForPkg(tg, "test", "", "-c")
 }
 
 func makeGoesPlatinaMk1(tg *target) error {
@@ -756,7 +775,7 @@ func makeGoesPlatinaMk1(tg *target) error {
 	if strings.Index(*tagsFlag, "debug") >= 0 {
 		args = append(args, "-gcflags", "-N -l")
 	}
-	return amd64Linux.goDoForPkg(goesPlatinaMk1, "build", args...)
+	return amd64Linux.goDoForPkg(goesPlatinaMk1, "build", "", args...)
 }
 
 func makeGoesPlatinaMk1Installer(tg *target) error {
@@ -997,12 +1016,22 @@ func (goenv *goenv) goDoInDir(dir string, args ...string) error {
 	return cmd.Run()
 }
 
-func (goenv *goenv) goDoForPkg(tg *target, op string, pkgArgs ...string) error {
+func (goenv *goenv) goDoForPkg(tg *target, op string, tags string,
+	pkgArgs ...string) error {
 	dir := tg.dirName
 	if dir == "" {
 		dir = platinaGoesDir // legacy packages
 	}
+	if len(tg.tags) > 0 {
+		if len(tags) > 0 {
+			tags = tags + ","
+		}
+		tags = tags + tg.tags
+	}
 	args := []string{op, "-o", tg.name}
+	if len(tags) > 0 {
+		args = append(args, "-tags", tags)
+	}
 	args = append(args, pkgArgs...)
 	args = append(args, filepath.Join(platinaPath, dir))
 	return goenv.goDoInDir(dir, args...)

@@ -6,6 +6,7 @@
 *.zip
 *~
 *#*#
+*.cpio.xz
 /goes-build
 /*.patch
 *.rom
