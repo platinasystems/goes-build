@@ -135,7 +135,7 @@ pipeline {
 		to: email_to
 	}
 	failure {
-	    cleanWs()
+	    //cleanWs()
 	    mail body: "GOES-BUILD build error: ${env.BUILD_URL}",
 		from: email_from,
 		replyTo: email_reply_to,
