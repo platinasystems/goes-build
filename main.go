@@ -1256,12 +1256,8 @@ func configWorktree(repo string, machine string, config string) (workdir string,
 		if err := shellCommandRun("mkdir -p " + workdir +
 			" && cd " + workdir +
 			" && p=`pwd` " +
-			" && b=worktree_`pwd | sed -e 's,/,_,g'`" +
 			" && cd " + gitdir +
-			" && ( git worktree prune ; git branch -d $b" +
-			" ; git worktree add -b $b $p" +
-			clone +
-			" )" +
+			" && git worktree add --detach $p" + clone +
 			" && cd $p" +
 			" && " + config); err != nil {
 			return "", err
