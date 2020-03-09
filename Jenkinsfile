@@ -79,7 +79,7 @@ pipeline {
 		}
 		dir('linux') {
 		    checkout([$class: 'GitSCM',
-			      branches: [[name: 'master']], 
+			      branches: [[name: 'v4.13.0-platina']], 
 			      doGenerateSubmoduleConfigurations: false, 
 			      extensions: [[$class: 'CloneOption',
 					    noTags: false,
