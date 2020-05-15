@@ -89,6 +89,8 @@ var (
 debug	disable optimizer and increase vnet log
 diag	include manufacturing diagnostics with BMC
 `)
+	worktreePath = flag.String("worktrees", "worktrees",
+		"path to where to create worktrees for build")
 	xFlag = flag.Bool("x", false, "print 'go build' commands.")
 	vFlag = flag.Bool("v", false,
 		"print the names of packages as they are compiled.")
@@ -537,7 +539,8 @@ func makeArmBoot(tg *target) (err error) {
 	if err = ioutil.WriteFile(machine+"-env.bin", env, 0644); err != nil {
 		return err
 	}
-	uboot := makeUboot("worktrees/u-boot/" + machine + "/u-boot-dtb.imx")
+	uboot := makeUboot(filepath.Join(*worktreePath, "u-boot",
+		machine, "u-boot-dtb.imx"))
 	if err = ioutil.WriteFile(machine+"-ubo.bin", uboot, 0644); err != nil {
 		return err
 	}
@@ -692,7 +695,8 @@ func makeArmLinuxKernel(tg *target) (err error) {
 	if err != nil {
 		return
 	}
-	dtb := "worktrees/linux/" + machine + "/arch/arm/boot/dts/" + machine + ".dtb"
+	dtb := filepath.Join(*worktreePath, "linux",
+		machine, "arch/arm/boot/dts/", machine+".dtb")
 	cmdline := "cp " + dtb + " " + machine + "-dtb.bin"
 	if err = shellCommandRun(cmdline); err != nil {
 		return err
@@ -727,7 +731,7 @@ func makeAmd64LinuxTest(tg *target) error {
 }
 
 func makeAmd64CorebootRom(tg *target) (err error) {
-	dir := "worktrees/coreboot/" + tg.config
+	dir := filepath.Join(*worktreePath, "coreboot", tg.config)
 	build := dir + "/build"
 	cbfstool := build + "/cbfstool"
 	tmprom := tg.name + ".tmp"
@@ -1238,7 +1242,7 @@ func findWorktree(repo string, machine string) (workdir string, gitdir string, e
 	if len(gitdir) == 0 {
 		return "", "", fmt.Errorf("can't find gitdir for %s", repo)
 	}
-	workdir = filepath.Join("worktrees", repo, machine)
+	workdir = filepath.Join(*worktreePath, repo, machine)
 	return
 }
 
