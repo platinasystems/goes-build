@@ -117,7 +117,8 @@ pipeline {
 			sh 'git config --global url.git@github.com:platinasystems/fe1.insteadOf "https://github.com/platinasystems/fe1"'
 			sh 'git config --global url.git@github.com:platinasystems/firmware-fe1.insteadOf "https://github.com/platinasystems/firmware-fe1"'
 			echo "Building goes..."
-			sh 'export PATH=/usr/local/x-tools/arm-unknown-linux-gnueabi/bin:${PATH}; go build -v && ./goes-build -x -v -z'
+			sh 'export PATH=/usr/local/x-tools/arm-unknown-linux-gnueabi/bin:${PATH}; make bindeb-pkg && ./goes-build -x -v -z'
+
 		    }
 		}
 	    }
@@ -127,7 +128,7 @@ pipeline {
 
     post {
 	success {
-	    archiveArtifacts artifacts: 'goes-build/*.rom,goes-build/*.zip,goes-build/worktrees/linux/*.deb,goes-build/worktrees/linux/*.changes,goes-bmc/goes-platina-mk1-bmc,goes-boot/goes-boot,goes-example/goes-example,goes-example/goes-example-arm,goes-platina-mk1/goes-platina-mk1,vnet-platina-mk1/vnet-platina-mk1'
+	    archiveArtifacts artifacts: 'goes-build/*.deb,goes-build/*.rom,goes-build/*.zip,goes-build/worktrees/linux/*.deb,goes-build/worktrees/linux/*.changes,goes-bmc/goes-platina-mk1-bmc,goes-boot/goes-boot,goes-example/goes-example,goes-example/goes-example-arm,goes-platina-mk1/goes-platina-mk1,vnet-platina-mk1/vnet-platina-mk1'
 	    mail body: "GOES-BUILD build ok: ${env.BUILD_URL}\n",
 		from: email_from,
 		replyTo: email_reply_to,
