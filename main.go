@@ -73,6 +73,7 @@ type goenv struct {
 }
 
 var (
+	branchFlag = flag.String("branch", "", "branch to check out")
 	goarchFlag = flag.String("goarch", runtime.GOARCH,
 		"GOARCH of PACKAGE build")
 	goosFlag = flag.String("goos", runtime.GOOS,
@@ -83,9 +84,9 @@ var (
 		"Use legacy flash layout.")
 	nFlag = flag.Bool("n", false,
 		"print 'go build' commands but do not run them.")
-	oFlag    = flag.String("o", "", "output file name of PACKAGE build")
-	rFlag    = flag.String("r", "", "rebase worktrees before build")
-	tagsFlag = flag.String("tags", "", `
+	oFlag       = flag.String("o", "", "output file name of PACKAGE build")
+	platinaPath = flag.String("platinapath", "..", "path to Platina sources")
+	tagsFlag    = flag.String("tags", "", `
 debug	disable optimizer and increase vnet log
 diag	include manufacturing diagnostics with BMC
 `)
@@ -162,8 +163,6 @@ diag	include manufacturing diagnostics with BMC
 
 	allTargets = []*target{}
 	targetMap  = map[string]*target{}
-
-	platinaPath = ".."
 )
 
 func init() {
@@ -893,7 +892,7 @@ func (goenv *goenv) makeCpioArchive(tg *target) (err error) {
 		{"etc/ssl/certs/ca-certificates.crt", 0644,
 			"/etc/ssl/certs/ca-certificates.crt"},
 		{"etc/goes/sshd/authorized_keys.default", 0600,
-			filepath.Join(platinaPath, platinaSecretsDir,
+			filepath.Join(*platinaPath, platinaSecretsDir,
 				"/secrets/sshd/id_rsa.pub")},
 	} {
 		if err = mkfileFromHostCpio(w, file.tname, file.mode, file.hname); err != nil {
@@ -909,7 +908,7 @@ func (goenv *goenv) makeCpioArchive(tg *target) (err error) {
 		return
 	}
 
-	goesbin, err := goenv.stripBinary(filepath.Join(platinaPath, tg.dirName, tg.name))
+	goesbin, err := goenv.stripBinary(filepath.Join(*platinaPath, tg.dirName, tg.name))
 	if err != nil {
 		return
 	}
@@ -1003,7 +1002,7 @@ func (goenv *goenv) goDoInDir(dir string, args ...string) error {
 		args = append([]string{args[0], "-x"}, args[1:]...)
 	}
 	cmd := exec.Command("go", args...)
-	cmd.Dir = filepath.Join(platinaPath, dir)
+	cmd.Dir = filepath.Join(*platinaPath, dir)
 	cmd.Env = os.Environ()
 	if goenv.goarch != runtime.GOARCH {
 		cmd.Env = append(cmd.Env, fmt.Sprint("GOARCH=", goenv.goarch))
@@ -1037,7 +1036,7 @@ func (goenv *goenv) goDoForPkg(tg *target, op string, tags string,
 		args = append(args, "-tags", tags)
 	}
 	args = append(args, pkgArgs...)
-	args = append(args, filepath.Join(platinaPath, dir))
+	args = append(args, filepath.Join(*platinaPath, dir))
 	return goenv.goDoInDir(dir, args...)
 }
 
@@ -1225,9 +1224,9 @@ func shellCommandRun(cmdline string) (err error) {
 
 func findWorktree(repo string, machine string) (workdir string, gitdir string, err error) {
 	for _, dir := range []string{
-		filepath.Join(platinaPath, repo),
-		filepath.Join(platinaPath, "src", repo),
-		filepath.Join(platinaPath, platinaSystemBuildSrcDir, repo),
+		filepath.Join(*platinaPath, repo),
+		filepath.Join(*platinaPath, "src", repo),
+		filepath.Join(*platinaPath, platinaSystemBuildSrcDir, repo),
 	} {
 		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
 			var err error
@@ -1243,6 +1242,7 @@ func findWorktree(repo string, machine string) (workdir string, gitdir string, e
 		return "", "", fmt.Errorf("can't find gitdir for %s", repo)
 	}
 	workdir = filepath.Join(*worktreePath, repo, machine)
+	fmt.Printf("Workdir: %s\n", workdir)
 	return
 }
 
@@ -1252,6 +1252,7 @@ func configWorktree(repo string, machine string, config string) (workdir string,
 		return
 	}
 	_, err = os.Stat(workdir)
+	fmt.Printf("configWorktree: os.Stat(%s) returned %s\n", workdir, err)
 	if os.IsNotExist(err) {
 		clone := ""
 		if *cloneFlag {
@@ -1270,9 +1271,9 @@ func configWorktree(repo string, machine string, config string) (workdir string,
 		return
 	}
 	if err == nil {
-		if *rFlag != "" {
+		if *branchFlag != "" {
 			if err := shellCommandRun("cd " + workdir +
-				" && git rebase " + *rFlag +
+				" && git checkout --detach " + *branchFlag +
 				" && " + config); err != nil {
 				return "", err
 			}
