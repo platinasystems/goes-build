@@ -1251,35 +1251,43 @@ func configWorktree(repo string, machine string, config string) (workdir string,
 	if err != nil {
 		return
 	}
-	_, err = os.Stat(workdir)
+	reconfig := false
+	_, err = os.Stat(filepath.Join(workdir, ".git"))
 	fmt.Printf("configWorktree: os.Stat(%s) returned %s\n", workdir, err)
-	if os.IsNotExist(err) {
-		clone := ""
-		if *cloneFlag {
-			clone = " || git clone . $p"
+	if err != nil {
+		if os.IsNotExist(err) {
+			clone := ""
+			if *cloneFlag {
+				clone = " || git clone . $p"
+			}
+			if err := shellCommandRun("mkdir -p " + workdir +
+				" && cd " + workdir +
+				" && p=`pwd` " +
+				" && cd " + gitdir +
+				" && git worktree prune" +
+				" && git worktree add --detach $p" + clone); err != nil {
+				return "", err
+			}
+			reconfig = true
+		} else {
+			return "", err
 		}
-		if err := shellCommandRun("mkdir -p " + workdir +
-			" && cd " + workdir +
-			" && p=`pwd` " +
-			" && cd " + gitdir +
-			" && git worktree add --detach $p" + clone +
-			" && cd $p" +
+	}
+	if *branchFlag != "" {
+		if err := shellCommandRun("cd " + workdir +
+			" && git checkout --detach " + *branchFlag); err != nil {
+			return "", err
+		}
+		reconfig = true
+	}
+	_, err = os.Stat(filepath.Join(workdir, ".config"))
+	if reconfig || os.IsNotExist(err) {
+		if err := shellCommandRun("cd " + workdir +
 			" && " + config); err != nil {
 			return "", err
 		}
-		err = nil
-		return
 	}
-	if err == nil {
-		if *branchFlag != "" {
-			if err := shellCommandRun("cd " + workdir +
-				" && git checkout --detach " + *branchFlag +
-				" && " + config); err != nil {
-				return "", err
-			}
-		}
-	}
-	return
+	return workdir, nil
 }
 
 func (goenv *goenv) makeboot(out string, configCommand string) (err error) {
