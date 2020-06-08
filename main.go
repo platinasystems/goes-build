@@ -550,7 +550,12 @@ func makeArmBoot(tg *target) (err error) {
 func makeArmItb(tg *target) (err error) {
 	machine := strings.TrimSuffix(tg.name, ".itb")
 
-	cmdline := "mkimage -f goes-bmc.its " + machine + "-itb.bin"
+	cmdline := "cp " + filepath.Join(*platinaPath,
+		platinaGoesMainGoesPlatinaMk1BmcDir,
+		"goes-bmc.its") +
+		" goes-bmc.its.tmp && " +
+		"mkimage -f goes-bmc.its.tmp " +
+		machine + "-itb.bin"
 	err = shellCommandRun(cmdline)
 	if err != nil {
 		return
