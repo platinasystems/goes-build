@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"io/ioutil"
 )
@@ -32,11 +34,18 @@ func makeUboot(ubo string) []byte {
 		copy(ubootbin[ubootStart:], uboot)
 	}
 
-	if header, err := ioutil.ReadFile("qspi-header-sckl00"); err != nil {
-		fmt.Printf("Unable to read qspi-header-sclk00: %s\n", err)
-		panic(err)
-	} else {
-		copy(ubootbin[headerStart:], header)
+	qspiConfig := bmcQuadSPIConfig()
+	var qspiHeader bytes.Buffer
+	err := binary.Write(&qspiHeader, binary.LittleEndian, qspiConfig)
+	if err != nil {
+		panic(fmt.Errorf("Packing qspi-header error: %w ", err))
 	}
+
+	if qspiHeader.Len() != 512 {
+		panic(fmt.Errorf("qspi-header unexpected length %d",
+			qspiHeader.Len()))
+	}
+	copy(ubootbin[headerStart:], qspiHeader.Bytes())
+
 	return ubootbin
 }
