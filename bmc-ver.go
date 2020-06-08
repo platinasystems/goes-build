@@ -10,12 +10,14 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 )
 
 type IMAGE struct {
 	Name string
+	Path **string
 	Dir  string
 	File string
 }
@@ -30,18 +32,22 @@ type IMGINFO struct {
 }
 
 var Images = [5]IMAGE{
-	{"ubo", "worktrees/u-boot/platina-mk1-bmc", "platina-mk1-bmc-ubo.bin"},
-	{"dtb", "worktrees/linux/platina-mk1-bmc", "platina-mk1-bmc-dtb.bin"},
-	{"env", ".", "platina-mk1-bmc-env.bin"},
-	{"ker", "worktrees/linux/platina-mk1-bmc", "platina-mk1-bmc.vmlinuz"},
-	{"itb", "../goes-bmc", "platina-mk1-bmc-itb.bin"},
+	{"ubo", &worktreePath, "u-boot/platina-mk1-bmc", "platina-mk1-bmc-ubo.bin"},
+	{"dtb", &worktreePath, "linux/platina-mk1-bmc", "platina-mk1-bmc-dtb.bin"},
+	{"env", nil, ".", "platina-mk1-bmc-env.bin"},
+	{"ker", &worktreePath, "linux/platina-mk1-bmc", "platina-mk1-bmc.vmlinuz"},
+	{"itb", &platinaPath, "goes-bmc", "platina-mk1-bmc-itb.bin"},
 }
 var ImgInfo [5]IMGINFO
 
 func makeVer(k string) {
 	Release := getReleaseInfo(k)
 	for i, _ := range Images {
-		getImageInfo(i, Images[i].Name, Images[i].Dir, Images[i].File)
+		dir := Images[i].Dir
+		if Images[i].Path != nil {
+			dir = filepath.Join(**Images[i].Path, dir)
+		}
+		getImageInfo(i, Images[i].Name, dir, Images[i].File)
 	}
 	writeVerFile(Release)
 }
