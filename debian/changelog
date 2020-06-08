@@ -1,3 +1,9 @@
+goes-build (2.0~alpha.1) stretch; urgency=medium
+
+  * Add options for goes 2.0 release
+
+ -- Kevin Paul Herbert <kph@platinasystems.com>  Mon, 08 Jun 2020 16:46:05 -0600
+
 goes-build (2.0~alpha.0) stretch; urgency=medium
 
   * Initial Release.
