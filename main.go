@@ -197,7 +197,7 @@ func init() {
 	}
 
 	exampleAmd64Deb = &target{
-		name:   "example-amd64.debo",
+		name:   "example-amd64.deb",
 		maker:  makeAmd64LinuxKernelDeb,
 		config: "platina-example-amd64_defconfig",
 		def:    true,
