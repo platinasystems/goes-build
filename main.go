@@ -197,7 +197,7 @@ func init() {
 	}
 
 	exampleAmd64Deb = &target{
-		name:   "example-amd64.deb",
+		name:   "example-amd64.debo",
 		maker:  makeAmd64LinuxKernelDeb,
 		config: "platina-example-amd64_defconfig",
 		def:    true,
@@ -1365,7 +1365,10 @@ func (goenv *goenv) makeLinuxDeb(tg *target) (err error) {
 		" CROSS_COMPILE=" + goenv.gnuPrefix +
 		" KDEB_PKGVERSION=" + ver +
 		" KERNELRELEASE=" + id +
-		" bindeb-pkg"); err != nil {
+		" bindeb-pkg &&" +
+		" cp " +
+		filepath.Join(dir, "..", "linux-*"+id+"_"+ver+"*.deb") +
+		" ."); err != nil {
 		return err
 	}
 	return
