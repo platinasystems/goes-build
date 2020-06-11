@@ -7,6 +7,7 @@ package main
 
 import (
 	"archive/zip"
+	"bufio"
 	"flag"
 	"fmt"
 	"io"
@@ -134,6 +135,7 @@ diag	include manufacturing diagnostics with BMC
 	corebootExampleAmd64Rom *target
 	corebootPlatinaMk1      *target
 	corebootPlatinaMk1Rom   *target
+	debianControl           *target
 	exampleAmd64Deb         *target
 	exampleAmd64Vmlinuz     *target
 	goesBoot                *target
@@ -194,6 +196,11 @@ func init() {
 		config:   corebootPlatinaMk1Machine,
 		def:      true,
 		bootRoot: "goes-bootrom-platina-mk1.cpio.xz",
+	}
+
+	debianControl = &target{
+		name:  "debian/control",
+		maker: makeAmd64DebianControl,
 	}
 
 	exampleAmd64Deb = &target{
@@ -376,6 +383,11 @@ func init() {
 		goesBootromPlatinaMk1,
 	}
 
+	debianControl.dependencies = []*target{
+		exampleAmd64Deb,
+		platinaMk1Deb,
+	}
+
 	exampleAmd64Deb.dependencies = []*target{
 		exampleAmd64Vmlinuz,
 	}
@@ -401,6 +413,7 @@ func init() {
 		corebootExampleAmd64Rom,
 		corebootPlatinaMk1,
 		corebootPlatinaMk1Rom,
+		debianControl,
 		exampleAmd64Deb,
 		exampleAmd64Vmlinuz,
 		goesBoot,
@@ -760,6 +773,10 @@ func makeAmd64LinuxKernel(tg *target) (err error) {
 
 func makeAmd64LinuxKernelDeb(tg *target) (err error) {
 	return amd64Linux.makeLinuxDeb(tg)
+}
+
+func makeAmd64DebianControl(tg *target) (err error) {
+	return amd64Linux.makeDebianControl(tg)
 }
 
 func makeAmd64LinuxInitramfs(tg *target) (err error) {
@@ -1313,6 +1330,18 @@ func (goenv *goenv) makeboot(out string, configCommand string) (err error) {
 	return
 }
 
+func getPackageVersions(dir string) (id, pkgver string, err error) {
+	ver, err := shellCommandOutput("cd " + dir + " && git describe")
+	if err != nil {
+		return
+	}
+	ver = strings.TrimLeft(ver, "v")
+	f := strings.Split(ver, "-")
+	id = f[0] + "." + f[1]
+	pkgver = f[0] + "." + f[1] + "-" + f[2]
+	return
+}
+
 func (goenv *goenv) makeLinux(tg *target) (err error) {
 	machine := strings.TrimSuffix(tg.name, ".vmlinuz")
 	configCommand := "cp " + goenv.kernelConfigPath + "/" + tg.config +
@@ -1323,20 +1352,13 @@ func (goenv *goenv) makeLinux(tg *target) (err error) {
 	if err != nil {
 		return
 	}
-	ver, err := shellCommandOutput("cd " + dir + " && git describe")
-	if err != nil {
-		return err
-	}
-	ver = strings.TrimLeft(ver, "v")
-	f := strings.Split(ver, "-")
-	id := f[0] + "." + f[1] + "-" + machine
-	pkgver := f[0] + "." + f[1] + "-" + f[2]
+	id, pkgver, err := getPackageVersions(dir)
 	if err := shellCommandRun("make -C " + dir +
 		" -j " + strconv.Itoa(runtime.NumCPU()*2) +
 		" ARCH=" + goenv.kernelArch +
 		" CROSS_COMPILE=" + goenv.gnuPrefix +
 		" KDEB_PKGVERSION=" + pkgver +
-		" KERNELRELEASE=" + id + " " +
+		" KERNELRELEASE=" + id + "-" + machine + " " +
 		goenv.kernelMakeTarget); err != nil {
 		return err
 	}
@@ -1353,25 +1375,86 @@ func (goenv *goenv) makeLinuxDeb(tg *target) (err error) {
 	if err != nil {
 		return
 	}
-	ver, err := shellCommandOutput("cd " + dir + " && git describe")
-	if err != nil {
-		return err
-	}
-	ver = strings.TrimLeft(ver, "v")
-	f := strings.Split(ver, "-")
-	id := f[0] + "." + f[1] + "-" + machine
-	pkgver := f[0] + "." + f[1] + "-" + f[2]
-	if err := shellCommandRun("make -C " + dir +
+	id, pkgver, err := getPackageVersions(dir)
+	pkgarch := pkgver + "_" + goenv.goarch
+	pkgdeb := pkgarch + ".deb"
+	idmach := id + "-" + machine
+	iddeb := idmach + "_" + pkgdeb
+	iddbgdeb := idmach + "-dbg_" + pkgdeb
+	cmd := "make -C " + dir +
 		" -j " + strconv.Itoa(runtime.NumCPU()*2) +
 		" ARCH=" + goenv.kernelArch +
 		" CROSS_COMPILE=" + goenv.gnuPrefix +
 		" KDEB_PKGVERSION=" + pkgver +
-		" KERNELRELEASE=" + id +
+		" KERNELRELEASE=" + idmach +
 		" bindeb-pkg &&" +
 		" cp " +
-		filepath.Join(dir, "..", "linux-*"+id+"_"+pkgver+"*.deb") +
-		" ."); err != nil {
+		filepath.Join(dir, "..", "linux-headers-"+iddeb) +
+		" " +
+		filepath.Join(dir, "..", "linux-image-"+iddeb) +
+		" " +
+		filepath.Join(dir, "..", "linux-image-"+iddbgdeb) +
+		" " +
+		filepath.Join(dir, "..", "linux-libc-dev_"+pkgdeb) +
+		" ."
+	if err := shellCommandRun(cmd); err != nil {
 		return err
+	}
+	return
+}
+
+func (goenv *goenv) makeDebianControl(tg *target) (err error) {
+	in, err := os.Open("debian/control.in")
+	if err != nil {
+		panic(err)
+	}
+	defer in.Close()
+
+	out, err := os.Create("debian/control")
+	if err != nil {
+		panic(err)
+	}
+	defer out.Close()
+
+	scanner := bufio.NewScanner(in)
+	scanner.Split(bufio.ScanLines)
+
+	currentPackage := "source"
+	id := ""
+	pkgver := ""
+	machine := ""
+
+	for scanner.Scan() {
+		t := scanner.Text()
+		if t == "" {
+			currentPackage = ""
+		}
+		if strings.HasPrefix(t, "Package:") {
+			p := strings.Fields(t)[1]
+			if currentPackage != "" {
+				panic("Saw Package " + p + " in " +
+					currentPackage)
+			}
+			ps := strings.Split(p, "-")
+			if ps[len(ps)-1] != "dbg" {
+				machine = ps[len(ps)-2] + "-" + ps[len(ps)-1]
+			} else {
+				machine = ps[len(ps)-3] + "-" + ps[len(ps)-2]
+			}
+			dir, _, err := findWorktree("linux", machine)
+			if err != nil {
+				panic(err)
+			}
+			id, pkgver, err = getPackageVersions(dir)
+			if err != nil {
+				panic(err)
+			}
+		}
+		t = strings.ReplaceAll(t, "#KERNELRELEASE#", id+"-"+machine)
+		t = strings.ReplaceAll(t, "#KDEB_PKGVERSION#", pkgver)
+		t = strings.ReplaceAll(t, "#KERNELID#", id)
+
+		fmt.Fprintln(out, t)
 	}
 	return
 }
