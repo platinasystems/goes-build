@@ -1,4 +1,4 @@
-// Copyright © 2015-2016 Platina Systems, Inc. All rights reserved.
+// Copyright © 2015-2020 Platina Systems, Inc. All rights reserved.
 // Use of this source code is governed by the GPL-2 license described in the
 // LICENSE file.
 
@@ -1329,12 +1329,13 @@ func (goenv *goenv) makeLinux(tg *target) (err error) {
 	}
 	ver = strings.TrimLeft(ver, "v")
 	f := strings.Split(ver, "-")
-	id := f[0] + "-" + machine
+	id := f[0] + "." + f[1] + "-" + machine
+	pkgver := f[0] + "." + f[1] + "-" + f[2]
 	if err := shellCommandRun("make -C " + dir +
 		" -j " + strconv.Itoa(runtime.NumCPU()*2) +
 		" ARCH=" + goenv.kernelArch +
 		" CROSS_COMPILE=" + goenv.gnuPrefix +
-		" KDEB_PKGVERSION=" + ver +
+		" KDEB_PKGVERSION=" + pkgver +
 		" KERNELRELEASE=" + id + " " +
 		goenv.kernelMakeTarget); err != nil {
 		return err
@@ -1358,16 +1359,17 @@ func (goenv *goenv) makeLinuxDeb(tg *target) (err error) {
 	}
 	ver = strings.TrimLeft(ver, "v")
 	f := strings.Split(ver, "-")
-	id := f[0] + "-" + machine
+	id := f[0] + "." + f[1] + "-" + machine
+	pkgver := f[0] + "." + f[1] + "-" + f[2]
 	if err := shellCommandRun("make -C " + dir +
 		" -j " + strconv.Itoa(runtime.NumCPU()*2) +
 		" ARCH=" + goenv.kernelArch +
 		" CROSS_COMPILE=" + goenv.gnuPrefix +
-		" KDEB_PKGVERSION=" + ver +
+		" KDEB_PKGVERSION=" + pkgver +
 		" KERNELRELEASE=" + id +
 		" bindeb-pkg &&" +
 		" cp " +
-		filepath.Join(dir, "..", "linux-*"+id+"_"+ver+"*.deb") +
+		filepath.Join(dir, "..", "linux-*"+id+"_"+pkgver+"*.deb") +
 		" ."); err != nil {
 		return err
 	}
