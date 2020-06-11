@@ -32,10 +32,10 @@ type IMGINFO struct {
 }
 
 var Images = [5]IMAGE{
-	{"ubo", &worktreePath, "u-boot/platina-mk1-bmc", "platina-mk1-bmc-ubo.bin"},
-	{"dtb", &worktreePath, "linux/platina-mk1-bmc", "platina-mk1-bmc-dtb.bin"},
+	{"ubo", &worktreePath, "platina-mk1-bmc/u-boot", "platina-mk1-bmc-ubo.bin"},
+	{"dtb", &worktreePath, "platina-mk1-bmc/linux", "platina-mk1-bmc-dtb.bin"},
 	{"env", nil, ".", "platina-mk1-bmc-env.bin"},
-	{"ker", &worktreePath, "linux/platina-mk1-bmc", "platina-mk1-bmc.vmlinuz"},
+	{"ker", &worktreePath, "platina-mk1-bmc/linux", "platina-mk1-bmc.vmlinuz"},
 	{"itb", &platinaPath, "goes-bmc", "platina-mk1-bmc-itb.bin"},
 }
 var ImgInfo [5]IMGINFO
