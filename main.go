@@ -1337,8 +1337,18 @@ func getPackageVersions(dir string) (id, pkgver string, err error) {
 	}
 	ver = strings.TrimLeft(ver, "v")
 	f := strings.Split(ver, "-")
-	id = f[0] + "." + f[1]
-	pkgver = f[0] + "." + f[1] + "-" + f[2]
+	if len(f) == 1 {
+		id = f[0]
+		pkgver = id
+	} else {
+		if len(f) == 2 {
+			id = f[0]
+			pkgver = id + "-" + f[1]
+		} else {
+			id = f[0] + "." + f[1]
+			pkgver = id + "-" + strings.Join(f[2:], "-")
+		}
+	}
 	return
 }
 
