@@ -1,3 +1,14 @@
+goes-build (2.0~rc.1) stretch; urgency=medium
+
+  * goes-build: Copy generated kernel debian files into build directory
+  * goes-build: Fix typo in example-amd64 kernel build
+  * goes-build: Change version number to make Platina revision significant
+  * goes-build: Swap machine and package in worktrees
+  * goes-build: Add debian control file generation
+  * goes-build: Make kernel version processing accept a.b.c.d-variant
+
+ -- Kevin Paul Herbert <kph@platinasystems.com>  Fri, 19 Jun 2020 15:44:36 -0600
+
 goes-build (2.0~alpha.1) stretch; urgency=medium
 
   * Add options for goes 2.0 release
