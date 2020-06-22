@@ -1,3 +1,9 @@
+goes-build (2.0.0) stretch; urgency=medium
+
+  * Release 2.0.0
+
+ -- Kevin Paul Herbert <kph@platinasystems.com>  Mon, 22 Jun 2020 16:15:03 -0600
+
 goes-build (2.0~rc.1) stretch; urgency=medium
 
   * goes-build: Copy generated kernel debian files into build directory
