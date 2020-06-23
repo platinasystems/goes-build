@@ -25,7 +25,7 @@ pipeline {
 
     post {
 	success {
-	    archiveArtifacts artifacts: '*.deb,*.zip,*.changes,*.buildinfo'
+	    archiveArtifacts artifacts: '../*.deb,../*.changes,../*.buildinfo'
 	    mail body: "GOES-BUILD build ok: ${env.BUILD_URL}\n",
 		from: email_from,
 		replyTo: email_reply_to,
