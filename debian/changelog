@@ -7,9 +7,10 @@ goes-build (2.1~alpha.0) UNRELEASED; urgency=medium
 
 goes-build (2.0.0) stretch; urgency=medium
 
+  * goes-build: Remove authorized_keys.default
   * Release 2.0.0
 
- -- Kevin Paul Herbert <kph@platinasystems.com>  Mon, 22 Jun 2020 16:48:48 -0600
+ -- Kevin Paul Herbert <kph@platinasystems.com>  Tue, 23 Jun 2020 15:33:28 -0600
 
 goes-build (2.0~rc.1) stretch; urgency=medium
 

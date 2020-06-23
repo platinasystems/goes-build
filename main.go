@@ -913,9 +913,6 @@ func (goenv *goenv) makeCpioArchive(tg *target) (err error) {
 	}{
 		{"etc/ssl/certs/ca-certificates.crt", 0644,
 			"/etc/ssl/certs/ca-certificates.crt"},
-		{"etc/goes/sshd/authorized_keys.default", 0600,
-			filepath.Join(*platinaPath, platinaSecretsDir,
-				"/secrets/sshd/id_rsa.pub")},
 	} {
 		if err = mkfileFromHostCpio(w, file.tname, file.mode, file.hname); err != nil {
 			return
