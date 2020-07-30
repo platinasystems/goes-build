@@ -535,7 +535,7 @@ func usage() {
 }
 
 func makeArmLinuxStatic(tg *target) error {
-	return armLinux.goDoForPkg(tg, "build", "netgo",
+	return armLinux.goDoForPkg(tg, "build", "netgo,osusergo",
 		"-ldflags", "-d")
 }
 
@@ -740,7 +740,7 @@ func makeAmd64Linux(tg *target) error {
 }
 
 func makeAmd64LinuxStatic(tg *target) error {
-	return amd64Linux.goDoForPkg(tg, "build", "netgo")
+	return amd64Linux.goDoForPkg(tg, "build", "netgo,osusergo")
 }
 
 func makeAmd64LinuxTest(tg *target) error {
@@ -780,7 +780,7 @@ func makeAmd64DebianControl(tg *target) (err error) {
 }
 
 func makeAmd64LinuxInitramfs(tg *target) (err error) {
-	err = amd64Linux.goDoForPkg(tg, "build", "netgo,bootrom")
+	err = amd64Linux.goDoForPkg(tg, "build", "netgo,osusergo,bootrom")
 	if err != nil {
 		return
 	}
