@@ -219,13 +219,13 @@ func init() {
 
 	goesBoot = &target{
 		name:    "goes-boot",
-		maker:   makeAmd64LinuxStatic,
+		maker:   makeAmd64LinuxInitramfs,
 		dirName: platinaGoesMainGoesBootDir,
 	}
 
 	goesBootPlatinaMk1 = &target{
 		name:    "goes-boot-platina-mk1",
-		maker:   makeAmd64LinuxStatic,
+		maker:   makeAmd64LinuxInitramfs,
 		dirName: platinaGoesMainGoesBootDir,
 		tags:    "mk1",
 	}
@@ -234,13 +234,14 @@ func init() {
 		name:    "goes-bootrom",
 		maker:   makeAmd64LinuxInitramfs,
 		dirName: platinaGoesMainGoesBootDir,
+		tags:    "bootrom",
 	}
 
 	goesBootromPlatinaMk1 = &target{
 		name:    "goes-bootrom-platina-mk1",
 		maker:   makeAmd64LinuxInitramfs,
 		dirName: platinaGoesMainGoesBootDir,
-		tags:    "mk1",
+		tags:    "bootrom,mk1",
 	}
 
 	goesBootArm = &target{
@@ -780,7 +781,7 @@ func makeAmd64DebianControl(tg *target) (err error) {
 }
 
 func makeAmd64LinuxInitramfs(tg *target) (err error) {
-	err = amd64Linux.goDoForPkg(tg, "build", "netgo,osusergo,bootrom")
+	err = amd64Linux.goDoForPkg(tg, "build", "netgo,osusergo")
 	if err != nil {
 		return
 	}
@@ -931,18 +932,12 @@ func (goenv *goenv) makeCpioArchive(tg *target) (err error) {
 	if err != nil {
 		return
 	}
-	if err = mkfileFromSliceCpio(w, "init", 0755, "(stripped)"+tg.name, goesbin); err != nil {
+	if err = mkfileFromSliceCpio(w, "sbin/"+tg.name, 0755,
+		"(stripped)"+tg.name, goesbin); err != nil {
 		return
 	}
-	for _, link := range []struct {
-		hname string
-		tname string
-	}{
-		{"usr/bin/goes", "../../init"},
-	} {
-		if err = mklinkCpio(w, link.hname, link.tname); err != nil {
-			return
-		}
+	if err = mklinkCpio(w, "init", "sbin/"+tg.name); err != nil {
+		return
 	}
 	return
 }
