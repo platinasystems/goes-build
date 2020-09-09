@@ -89,6 +89,7 @@ eval ${dryrun} ${qemu} ${M:+-M ${M}} -m 1G ${kvm:+--enable-kvm} \
 	${dtb:+-dtb }${dtb} \
 	-no-reboot \
 	-nographic \
+	-device virtio-rng-pci \
 	${ROOT:+-drive file=${ROOT},if=ide,index=0,media=disk} \
 	${DISK:+-drive file=${DISK},if=ide,index=0,media=disk,format=raw} \
 	${netdev:+-netdev ${quote}\"${netdev}\"${quote}} \
