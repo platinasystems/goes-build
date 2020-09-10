@@ -165,6 +165,8 @@ diag	include manufacturing diagnostics with BMC
 
 	allTargets = []*target{}
 	targetMap  = map[string]*target{}
+
+	worktreeMutex = &sync.Mutex{}
 )
 
 func init() {
@@ -1270,6 +1272,8 @@ func configWorktree(repo string, machine string, config string) (workdir string,
 	fmt.Printf("configWorktree: os.Stat(%s) returned %s\n", workdir, err)
 	if err != nil {
 		if os.IsNotExist(err) {
+			worktreeMutex.Lock()
+			defer worktreeMutex.Unlock()
 			clone := ""
 			if *cloneFlag {
 				clone = " || git clone . $p"
