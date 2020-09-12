@@ -8,7 +8,7 @@ import (
 )
 
 const envvar = `baudrate=115200
-bootargs=console=ttymxc0,115200n8
+bootargs=console=ttymxc0,115200n8 GODEBUG=asyncpreemptoff=1
 bootcmd=run readmac;run sf_read_itb bootlinux_itb;run ubi_read_itb bootlinux_itb
 bootlinux_itb=bootm ${loadaddr}
 bootdelay=3
