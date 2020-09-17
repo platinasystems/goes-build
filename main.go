@@ -538,8 +538,7 @@ func usage() {
 }
 
 func makeArmLinuxStatic(tg *target) error {
-	return armLinux.goDoForPkg(tg, "build", "netgo,osusergo",
-		"-ldflags", "-d")
+	return armLinux.goDoForPkg(tg, "build", "netgo,osusergo", "-d")
 }
 
 func makeArmBoot(tg *target) (err error) {
@@ -739,15 +738,15 @@ func makeAmd64Boot(tg *target) (err error) {
 }
 
 func makeAmd64Linux(tg *target) error {
-	return amd64Linux.goDoForPkg(tg, "build", "")
+	return amd64Linux.goDoForPkg(tg, "build", "", "")
 }
 
 func makeAmd64LinuxStatic(tg *target) error {
-	return amd64Linux.goDoForPkg(tg, "build", "netgo,osusergo")
+	return amd64Linux.goDoForPkg(tg, "build", "netgo,osusergo", "")
 }
 
 func makeAmd64LinuxTest(tg *target) error {
-	return amd64Linux.goDoForPkg(tg, "test", "", "-c")
+	return amd64Linux.goDoForPkg(tg, "test", "", "", "-c")
 }
 
 func makeAmd64CorebootRom(tg *target) (err error) {
@@ -783,7 +782,7 @@ func makeAmd64DebianControl(tg *target) (err error) {
 }
 
 func makeAmd64LinuxInitramfs(tg *target) (err error) {
-	err = amd64Linux.goDoForPkg(tg, "build", "netgo,osusergo")
+	err = amd64Linux.goDoForPkg(tg, "build", "netgo,osusergo", "")
 	if err != nil {
 		return
 	}
@@ -791,11 +790,11 @@ func makeAmd64LinuxInitramfs(tg *target) (err error) {
 }
 
 func makeHost(tg *target) error {
-	return host.goDoForPkg(tg, "build", "")
+	return host.goDoForPkg(tg, "build", "", "")
 }
 
 func makeHostTest(tg *target) error {
-	return host.goDoForPkg(tg, "test", "", "-c")
+	return host.goDoForPkg(tg, "test", "", "", "-c")
 }
 
 func makeGoesPlatinaMk1(tg *target) error {
@@ -803,7 +802,7 @@ func makeGoesPlatinaMk1(tg *target) error {
 	if strings.Index(*tagsFlag, "debug") >= 0 {
 		args = append(args, "-gcflags", "-N -l")
 	}
-	return amd64Linux.goDoForPkg(goesPlatinaMk1, "build", "", args...)
+	return amd64Linux.goDoForPkg(goesPlatinaMk1, "build", "", "", args...)
 }
 
 func makeGoesPlatinaMk1Installer(tg *target) error {
@@ -1036,10 +1035,22 @@ func (goenv *goenv) goDoInDir(dir string, args ...string) error {
 }
 
 func (goenv *goenv) goDoForPkg(tg *target, op string, tags string,
-	pkgArgs ...string) error {
+	ldflags string, pkgArgs ...string) error {
 	dir := tg.dirName
 	if dir == "" {
 		dir = platinaGoesDir // legacy packages
+	}
+	dirPath := filepath.Join(*platinaPath, dir)
+	ver, err := shellCommandOutput("cd " + dirPath + " && git describe --tags")
+	if err != nil {
+		fmt.Printf("Error getting info for %s/%s: %s\n", dirPath, tg.name, err)
+		panic(err)
+	}
+	flag := "-X main.Version=" + ver
+	if len(ldflags) == 0 {
+		ldflags = flag
+	} else {
+		ldflags = ldflags + " " + flag
 	}
 	if len(tg.tags) > 0 {
 		if len(tags) > 0 {
@@ -1052,7 +1063,8 @@ func (goenv *goenv) goDoForPkg(tg *target, op string, tags string,
 		args = append(args, "-tags", tags)
 	}
 	args = append(args, pkgArgs...)
-	args = append(args, filepath.Join(*platinaPath, dir))
+	args = append(args, "-ldflags", ldflags)
+	args = append(args, dirPath)
 	return goenv.goDoInDir(dir, args...)
 }
 
