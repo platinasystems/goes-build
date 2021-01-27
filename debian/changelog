@@ -1,3 +1,9 @@
+goes-build (2.1.1) stretch; urgency=medium
+
+  * goes-build: Change goes-boot to use platina-mk1-bootrom_defconfig
+
+ -- Kevin Paul Herbert <kph@platinasystems.com>  Tue, 26 Jan 2021 17:09:03 -0700
+
 goes-build (2.1.0) stretch; urgency=medium
 
   * Release 2.1.0

@@ -131,37 +131,39 @@ diag	include manufacturing diagnostics with BMC
 	corebootPlatinaMk1Config  = "platina-mk1_defconfig"
 	corebootPlatinaMk1Machine = "platina-mk1"
 
-	corebootExampleAmd64    *target
-	corebootExampleAmd64Rom *target
-	corebootPlatinaMk1      *target
-	corebootPlatinaMk1Rom   *target
-	debianControl           *target
-	exampleAmd64Deb         *target
-	exampleAmd64Vmlinuz     *target
-	goesBoot                *target
-	goesBootPlatinaMk1      *target
-	goesBootArm             *target
-	goesBootrom             *target
-	goesBootromPlatinaMk1   *target
-	goesExample             *target
-	goesExampleArm          *target
-	goesIP                  *target
-	goesIPTest              *target
-	goesPlatinaMk1          *target
-	goesPlatinaMk1Bmc       *target
-	goesPlatinaMk1Installer *target
-	goesPlatinaMk1Test      *target
-	goesPlatinaMk2Lc1Bmc    *target
-	goesPlatinaMk2Mc1Bmc    *target
-	itbPlatinaMk1Bmc        *target
-	platinaMk1BmcVmlinuz    *target
-	platinaMk1Deb           *target
-	platinaMk1Vmlinuz       *target
-	platinaMk2Lc1BmcVmlinuz *target
-	platinaMk2Mc1BmcVmlinuz *target
-	ubootPlatinaMk1Bmc      *target
-	vnetPlatinaMk1          *target
-	zipPlatinaMk1Bmc        *target
+	corebootExampleAmd64       *target
+	corebootExampleAmd64Rom    *target
+	corebootPlatinaMk1         *target
+	corebootPlatinaMk1Rom      *target
+	debianControl              *target
+	exampleAmd64Deb            *target
+	exampleAmd64BootromVmlinuz *target
+	exampleAmd64Vmlinuz        *target
+	goesBoot                   *target
+	goesBootPlatinaMk1         *target
+	goesBootArm                *target
+	goesBootrom                *target
+	goesBootromPlatinaMk1      *target
+	goesExample                *target
+	goesExampleArm             *target
+	goesIP                     *target
+	goesIPTest                 *target
+	goesPlatinaMk1             *target
+	goesPlatinaMk1Bmc          *target
+	goesPlatinaMk1Installer    *target
+	goesPlatinaMk1Test         *target
+	goesPlatinaMk2Lc1Bmc       *target
+	goesPlatinaMk2Mc1Bmc       *target
+	itbPlatinaMk1Bmc           *target
+	platinaMk1BmcVmlinuz       *target
+	platinaMk1Deb              *target
+	platinaMk1BootromVmlinuz   *target
+	platinaMk1Vmlinuz          *target
+	platinaMk2Lc1BmcVmlinuz    *target
+	platinaMk2Mc1BmcVmlinuz    *target
+	ubootPlatinaMk1Bmc         *target
+	vnetPlatinaMk1             *target
+	zipPlatinaMk1Bmc           *target
 
 	allTargets = []*target{}
 	targetMap  = map[string]*target{}
@@ -208,6 +210,13 @@ func init() {
 	exampleAmd64Deb = &target{
 		name:   "example-amd64.deb",
 		maker:  makeAmd64LinuxKernelDeb,
+		config: "platina-example-amd64_defconfig",
+		def:    true,
+	}
+
+	exampleAmd64BootromVmlinuz = &target{
+		name:   "example-amd64-bootrom.vmlinuz",
+		maker:  makeAmd64LinuxKernel,
 		config: "platina-example-amd64_defconfig",
 		def:    true,
 	}
@@ -333,6 +342,12 @@ func init() {
 		def:    true,
 	}
 
+	platinaMk1BootromVmlinuz = &target{
+		name:   "platina-mk1-bootrom.vmlinuz",
+		maker:  makeAmd64LinuxKernel,
+		config: "platina-mk1-bootrom_defconfig",
+	}
+
 	platinaMk1Vmlinuz = &target{
 		name:   "platina-mk1.vmlinuz",
 		maker:  makeAmd64LinuxKernel,
@@ -376,13 +391,13 @@ func init() {
 
 	corebootExampleAmd64Rom.dependencies = []*target{
 		corebootExampleAmd64,
-		exampleAmd64Vmlinuz,
+		exampleAmd64BootromVmlinuz,
 		goesBootrom,
 	}
 
 	corebootPlatinaMk1Rom.dependencies = []*target{
 		corebootPlatinaMk1,
-		platinaMk1Vmlinuz,
+		platinaMk1BootromVmlinuz,
 		goesBootromPlatinaMk1,
 	}
 
@@ -438,6 +453,7 @@ func init() {
 		platinaMk1BmcVmlinuz,
 		platinaMk1Deb,
 		platinaMk1Vmlinuz,
+		platinaMk1BootromVmlinuz,
 		platinaMk2Lc1BmcVmlinuz,
 		platinaMk2Mc1BmcVmlinuz,
 		ubootPlatinaMk1Bmc,
@@ -757,7 +773,7 @@ func makeAmd64CorebootRom(tg *target) (err error) {
 
 	cmdline := "cp " + build + "/coreboot.rom " + tmprom +
 		" && " + cbfstool + " " + tmprom + " add-payload" +
-		" -f " + tg.config + ".vmlinuz" +
+		" -f " + tg.config + "-bootrom.vmlinuz" +
 		" -I " + tg.bootRoot +
 		` -C "console=ttyS0,115200n8 intel_iommu=off quiet"` +
 		" -n fallback/payload -c none -r COREBOOT" +
