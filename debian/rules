@@ -1,6 +1,31 @@
 #!/usr/bin/make -f
 #export DH_VERBOSE = 1
 
+export BUILDVER := $(shell perl -w -mDpkg::Version -e 'Dpkg::Version->new(`dpkg-parsechangelog -SVersion`)->version() =~ /^([0-9]+\.[0-9]+)/ && print("$$1\n")')
+
+gencontrol:
+	for file in control; do \
+		{ \
+			echo '#'; \
+			echo '# WARNING: "debian/'$$file'" is generated via "debian/rules gencontrol" (sourced from "debian/'$$file'.in")'; \
+			echo '#'; \
+			echo; \
+			sed -e 's/X.Y/$(BUILDVER)/g' debian/$$file.in; \
+		} > debian/$$file; \
+	done
+
+override_dh_auto_clean: gencontrol
+	# remove built objects
+	rm -rf bin pkg
+	@set -e; cd debian; for x in goes-build-X.Y.*; do \
+		rm -f -v goes-build-$(BUILDVER)-$${x##goes-build-X.Y.}; \
+	done
+
+override_dh_prep:
+	dh_prep
+	set -e; cd debian; for x in goes-build-X.Y.*; do \
+		sed -e 's/X.Y/$(BUILDVER)/g' $$x > goes-build-$(BUILDVER).$${x##goes-build-X.Y.}; \
+	done
 
 %:
-	dh $@
+	+dh $@

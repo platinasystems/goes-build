@@ -1,3 +1,9 @@
+goes-build (2.1.0.1) stretch; urgency=medium
+
+  * goes-build: Allow multiple versions to coexist
+
+ -- Kevin Paul Herbert <kph@platinasystems.com>  Wed, 17 Feb 2021 13:52:08 -0700
+
 goes-build (2.1.0) stretch; urgency=medium
 
   * Release 2.1.0

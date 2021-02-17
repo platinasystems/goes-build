@@ -15,8 +15,6 @@
 /platina-*.bin
 /platina-*.dtb
 debian/goes-build.substvars
-debian/goes/build/
 debian/.debhelper/
 debian/debhelper-build-stamp
 debian/files
-debian/goes-build/

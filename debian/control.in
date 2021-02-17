@@ -1,7 +1,3 @@
-#
-# WARNING: "debian/control" is generated via "debian/rules gencontrol" (sourced from "debian/control.in")
-#
-
 Source: goes-build
 Section: devel
 Priority: optional
@@ -12,7 +8,7 @@ Homepage: https://github.com/platinasystems/goes-build
 Vcs-Browser: https://github.com/platinasystems/goes-build
 Vcs-Git: https://github.com/platinasystems/goes-build.git
 
-Package: goes-build-2.2
+Package: goes-build-X.Y
 Architecture: any
 Depends: ${misc:Depends}
 Replaces: goes-build
