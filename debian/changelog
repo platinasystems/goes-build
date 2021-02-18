@@ -1,8 +1,14 @@
-goes-build (2.1.1) stretch; urgency=medium
+goes-build (2.2.0) stretch; urgency=medium
 
   * goes-build: Change goes-boot to use platina-mk1-bootrom_defconfig
 
  -- Kevin Paul Herbert <kph@platinasystems.com>  Tue, 26 Jan 2021 17:09:03 -0700
+
+goes-build (2.1.4) stretch; urgency=medium
+
+  * goes-build: Fixes for multiple version coexistence
+
+ -- Kevin Paul Herbert <kph@platinasystems.com>  Wed, 18 Feb 2021 14:48:02 -0700
 
 goes-build (2.1.0.1) stretch; urgency=medium
 
