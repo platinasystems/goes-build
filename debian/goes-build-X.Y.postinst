@@ -21,9 +21,13 @@ set -e
 case "$1" in
     configure|abort-upgrade|abort-remove|abort-deconfigure)
 	[ -x /usr/bin/goes-build ] && rm -f /usr/bin/goes-build
+	[ -f /usr/share/man/man1/goes-build.1.gz ] && rm -f /usr/share/man/man1/goes-build.1.gz
 	update-alternatives \
 	    --install /usr/bin/goes-build goes-build \
-		/usr/lib/goes-build-X.Y/goes-build 50
+	    /usr/lib/goes-build-X.Y/goes-build 50 \
+	    --slave /usr/share/man/man1/goes-build.1.gz \
+		goes-build.1.gz \
+		/usr/share/man/man1/goes-build-X.Y.1.gz
     ;;
 
     *)

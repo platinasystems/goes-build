@@ -19,7 +19,7 @@ set -e
 
 case "$1" in
     remove|upgrade|deconfigure|failed-upgrade)
-	update-alternatives --remove goes-build /usr/lib/goes-build.X.Y/goes-build
+	update-alternatives --remove goes-build /usr/lib/goes-build-X.Y/goes-build
     ;;
 
     *)

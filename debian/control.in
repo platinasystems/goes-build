@@ -19,6 +19,6 @@ Description: Build tool for Platina Systems
 Package: goes-build
 Architecture: any
 Depends: goes-build-X.Y
-Description: Metapackge for latest goes-build
+Description: Metapackage for latest goes-build
  Install this package to get automatic updates to new releases
  of the goes-build tool.
