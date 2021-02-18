@@ -11,9 +11,14 @@ Vcs-Git: https://github.com/platinasystems/goes-build.git
 Package: goes-build-X.Y
 Architecture: any
 Depends: ${misc:Depends}
-Replaces: goes-build
 Description: Build tool for Platina Systems
  goes-build is used to build system images used in Platina Systems
  products. It is used for building x86 boot ROMs and BMC system
  images.
 
+Package: goes-build
+Architecture: any
+Depends: goes-build-X.Y
+Description: Metapackge for latest goes-build
+ Install this package to get automatic updates to new releases
+ of the goes-build tool.
