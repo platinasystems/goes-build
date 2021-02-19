@@ -12,7 +12,7 @@ Homepage: https://github.com/platinasystems/goes-build
 Vcs-Browser: https://github.com/platinasystems/goes-build
 Vcs-Git: https://github.com/platinasystems/goes-build.git
 
-Package: goes-build-2.1
+Package: goes-build-2.2
 Architecture: any
 Depends: ${misc:Depends}
 Description: Build tool for Platina Systems
@@ -22,7 +22,7 @@ Description: Build tool for Platina Systems
 
 Package: goes-build
 Architecture: any
-Depends: goes-build-2.1
+Depends: goes-build-2.2
 Description: Metapackage for latest goes-build
  Install this package to get automatic updates to new releases
  of the goes-build tool.

@@ -1,0 +1,72 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" (C) Copyright 2020 Platina Systems, Inc. <kph@platinasystems.com>,
+.\"
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.TH goes-build 1 "March 17 2020"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.\" Some roff macros, for reference:
+.\" .nh        disable hyphenation
+.\" .hy        enable hyphenation
+.\" .ad l      left justify
+.\" .ad b      justify to both left and right margins
+.\" .nf        disable filling
+.\" .fi        enable filling
+.\" .br        insert line break
+.\" .sp <n>    insert n+1 empty lines
+.\" for manpage-specific macros, see man(7)
+.SH NAME
+goes-build \- Build Platina Systems programs
+.SH DESCRIPTION
+goes\-build [ OPTION... ] [ TARGET... | PACKAGE ]
+.SH OPTIONS
+.HP
+\fB\-clone\fR
+.IP
+Fallback to 'git clone' if git worktree does not work.
+.HP
+\fB\-goarch\fR string
+.IP
+GOARCH of PACKAGE build (default "amd64")
+.HP
+\fB\-goos\fR string
+.IP
+GOOS of PACKAGE build (default "linux")
+.HP
+\fB\-legacy\fR
+.IP
+Use legacy flash layout.
+.TP
+\fB\-n\fR
+print 'go build' commands but do not run them.
+.HP
+\fB\-o\fR string
+.IP
+output file name of PACKAGE build
+.HP
+\fB\-r\fR string
+.IP
+rebase worktrees before build
+.HP
+\fB\-tags\fR string
+.PP
+        
+.TP
+debug
+disable optimizer and increase vnet log
+.TP
+diag
+include manufacturing diagnostics with BMC
+.PP
+        
+.TP
+\fB\-v\fR
+print the names of packages as they are compiled.
+.TP
+\fB\-x\fR
+print 'go build' commands.
+.TP
+\fB\-z\fR
+print 'goes\-build' commands.
