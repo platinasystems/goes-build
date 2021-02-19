@@ -1,8 +1,14 @@
+goes-build (2.1.5) stretch; urgency=medium
+
+  * goes-build: Check for links explicitly [ -L <link> ]
+
+ -- Kevin Paul Herbert <kph@platinasystems.com>  Thu, 18 Feb 2021 20:55:48 -0700
+
 goes-build (2.1.4) stretch; urgency=medium
 
   * goes-build: Fixes for multiple version coexistence
 
- -- Kevin Paul Herbert <kph@platinasystems.com>  Wed, 18 Feb 2021 14:48:02 -0700
+ -- Kevin Paul Herbert <kph@platinasystems.com>  Thu, 18 Feb 2021 14:48:02 -0700
 
 goes-build (2.1.0.1) stretch; urgency=medium
 
