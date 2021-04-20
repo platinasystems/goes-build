@@ -6,7 +6,7 @@ Source: goes-build
 Section: devel
 Priority: optional
 Maintainer: Kevin Paul Herbert <kph@platinasystems.com>
-Build-Depends: debhelper (>= 10), golang-1.14
+Build-Depends: debhelper (>= 10), golang-1.14 | golang-1.15
 Standards-Version: 3.9.8
 Homepage: https://github.com/platinasystems/goes-build
 Vcs-Browser: https://github.com/platinasystems/goes-build
